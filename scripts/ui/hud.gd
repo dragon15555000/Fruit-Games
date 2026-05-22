@@ -1,9 +1,10 @@
 extends CanvasLayer
 
-@onready var p1_label = $Control/Margin/Grid/P1Label
-@onready var p2_label = $Control/Margin/Grid/P2Label
-@onready var p3_label = $Control/Margin/Grid/P3Label
-@onready var p4_label = $Control/Margin/Grid/P4Label
+@onready var p1_label    = $Control/Margin/Grid/P1Label
+@onready var p2_label    = $Control/Margin/Grid/P2Label
+@onready var p3_label    = $Control/Margin/Grid/P3Label
+@onready var p4_label    = $Control/Margin/Grid/P4Label
+@onready var round_label = $Control/Margin/Grid/RoundLabel
 
 var labels: Array
 
@@ -16,6 +17,9 @@ func _process(_delta: float) -> void:
 	update_hud()
 
 func update_hud() -> void:
+	var round_in_set = ((Global.round_number - 1) % Global.rounds_per_set) + 1
+	round_label.text = "Runda %d/%d" % [round_in_set, Global.rounds_per_set]
+
 	for i in range(4):
 		var prefix = "p" + str(i + 1)
 		var char_name = ""

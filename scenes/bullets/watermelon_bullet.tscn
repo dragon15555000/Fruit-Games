@@ -1,0 +1,52 @@
+[gd_scene load_steps=4 format=3 uid="uid://bwtml6n2q8d4f3"]
+
+[ext_resource type="Script" path="res://scripts/bullets/bullet.gd" id="1_cx22g"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_watermelon"]
+radius = 4.0
+
+[sub_resource type="GDScript" id="GDScript_watermelon"]
+script/source = "extends Node2D
+
+@export var bullet_type: String = \"Watermelon\"
+var rot_angle: float = 0.0
+
+func _process(delta: float):
+	rot_angle += delta * 8.0
+	queue_redraw()
+
+func _draw():
+	_draw_watermelon_seed()
+
+func _draw_watermelon_seed():
+	draw_set_transform(Vector2.ZERO, rot_angle)
+
+	# Czerwony sok (rozbryzg)
+	draw_circle(Vector2(-1.5, 0.5), 2.5, Color(0.9, 0.1, 0.15, 0.35))
+
+	# Czarna pestka arbuza (owalny kształt)
+	var seed = PackedVector2Array([
+		Vector2(0, -4.0), Vector2(2.2, -2.0),
+		Vector2(2.5, 0), Vector2(2.2, 2.0),
+		Vector2(0, 4.0), Vector2(-2.2, 2.0),
+		Vector2(-2.5, 0), Vector2(-2.2, -2.0)
+	])
+	draw_colored_polygon(seed, Color(0.1, 0.08, 0.08))
+
+	# Biały połysk
+	draw_circle(Vector2(-0.6, -1.2), 0.9, Color(1.0, 1.0, 1.0, 0.4))
+
+	draw_set_transform(Vector2.ZERO, 0)
+"
+
+[node name="watermelon_bullet" type="Area2D" groups=["Bullet"]]
+script = ExtResource("1_cx22g")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_watermelon")
+
+[node name="BulletSprite" type="Node2D" parent="."]
+script = SubResource("GDScript_watermelon")
+bullet_type = "Watermelon"
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
