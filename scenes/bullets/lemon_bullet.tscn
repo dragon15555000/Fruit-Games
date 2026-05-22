@@ -1,0 +1,51 @@
+[gd_scene load_steps=4 format=3 uid="uid://lemon_bullet_001"]
+
+[ext_resource type="Script" path="res://scripts/bullets/bullet.gd" id="1_cx22g"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_lemon"]
+radius = 2.5
+
+[sub_resource type="GDScript" id="GDScript_lemon"]
+script/source = "extends Node2D
+
+@export var bullet_type: String = \"Lemon\"
+var rot_angle: float = 0.0
+
+func _process(delta: float):
+	rot_angle += delta * 14.0
+	queue_redraw()
+
+func _draw():
+	_draw_lemon_pip()
+
+func _draw_lemon_pip():
+	draw_set_transform(Vector2.ZERO, rot_angle)
+
+	# Żółty płatek cytryny
+	var pip = PackedVector2Array([
+		Vector2(0, -3.5), Vector2(2.0, -1.0),
+		Vector2(2.0, 1.0), Vector2(0, 3.5),
+		Vector2(-2.0, 1.0), Vector2(-2.0, -1.0)
+	])
+	draw_colored_polygon(pip, Color(0.95, 0.92, 0.15))
+
+	# Zielona skórka (cienki obrys)
+	draw_arc(Vector2(0, 0), 2.5, 0, TAU, 16, Color(0.3, 0.75, 0.1), 1.2)
+
+	# Biały środek
+	draw_circle(Vector2(0, 0), 0.8, Color(1.0, 1.0, 0.85, 0.8))
+
+	draw_set_transform(Vector2.ZERO, 0)
+"
+
+[node name="lemon_bullet" type="Area2D" groups=["Bullet"]]
+script = ExtResource("1_cx22g")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_lemon")
+
+[node name="BulletSprite" type="Node2D" parent="."]
+script = SubResource("GDScript_lemon")
+bullet_type = "Lemon"
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

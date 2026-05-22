@@ -5,7 +5,9 @@ extends Control
 	"Strawberry": $Strawberry2,
 	"Orange":     $Orange2,
 	"Pineapple":  $Pineapple2,
-	"Grape":      $Grape2
+	"Grape":      $Grape2,
+	"Lemon":      $Lemon2,
+	"Watermelon": $Watermelon2,
 }
 
 func _ready():
@@ -108,6 +110,14 @@ func _on_orange_2_pressed():
 func _on_pineapple_2_pressed():
 	AudioManager.play_ui_click()
 	pick("Pineapple")
+
+func _on_lemon_2_pressed():
+	AudioManager.play_ui_click()
+	pick("Lemon")
+
+func _on_watermelon_2_pressed():
+	AudioManager.play_ui_click()
+	pick("Watermelon")
 
 func pick(character_name: String):
 	if Global.is_network_game:

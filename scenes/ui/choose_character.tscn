@@ -89,7 +89,35 @@ theme_override_font_sizes/font_size = 32
 text = "Grape
 "
 
+[node name="Lemon2" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 300.0
+offset_top = 220.0
+offset_right = 550.0
+offset_bottom = 420.0
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "Lemon"
+
+[node name="Watermelon2" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 600.0
+offset_top = 220.0
+offset_right = 850.0
+offset_bottom = 420.0
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "Watermelon"
+
 [connection signal="pressed" from="Orange2" to="." method="_on_orange_2_pressed"]
 [connection signal="pressed" from="Pineapple2" to="." method="_on_pineapple_2_pressed"]
 [connection signal="pressed" from="Strawberry2" to="." method="_on_strawberry_2_pressed"]
 [connection signal="pressed" from="Grape2" to="." method="_on_grape_2_pressed"]
+[connection signal="pressed" from="Lemon2" to="." method="_on_lemon_2_pressed"]
+[connection signal="pressed" from="Watermelon2" to="." method="_on_watermelon_2_pressed"]

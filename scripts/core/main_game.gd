@@ -19,11 +19,11 @@ var character_scenes = {
 	},
 	"Lemon": {
 		"scene":  preload("res://scenes/characters/lemon.tscn"),
-		"bullet": preload("res://scenes/bullets/orange_bullet.tscn")
+		"bullet": preload("res://scenes/bullets/lemon_bullet.tscn")
 	},
 	"Watermelon": {
 		"scene":  preload("res://scenes/characters/watermelon.tscn"),
-		"bullet": preload("res://scenes/bullets/strawberry_bullet.tscn")
+		"bullet": preload("res://scenes/bullets/watermelon_bullet.tscn")
 	}
 }
 

@@ -29,37 +29,41 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -84.5
-offset_top = -53.0
-offset_right = 84.5
+offset_left = -100.0
+offset_top = -60.0
+offset_right = 100.0
+offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_font_sizes/font_size = 32
-text = "Countinue"
+text = "Kontynuuj"
 
 [node name="WinnerLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -36.0
-offset_right = 36.0
-offset_bottom = 45.0
+offset_left = -300.0
+offset_top = 40.0
+offset_right = 300.0
+offset_bottom = 90.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 32
-text = "Winner: "
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 40
+text = "Wygrał: "
 
 [node name="PointsLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -64.5
-offset_top = 100.0
-offset_right = 64.5
-offset_bottom = 145.0
+offset_left = -250.0
+offset_top = 110.0
+offset_right = 250.0
+offset_bottom = 350.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 32
-text = "Winner: "
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+text = "Punkty:"
 
 [connection signal="pressed" from="Continue" to="." method="_on_button_pressed"]
