@@ -6,10 +6,10 @@
 size = Vector2(384, 40)
 
 [sub_resource type="RectangleShape2D" id="plat_med"]
-size = Vector2(60, 10)
+size = Vector2(65, 10)
 
 [sub_resource type="RectangleShape2D" id="plat_small"]
-size = Vector2(50, 10)
+size = Vector2(52, 10)
 
 [node name="Canopy" type="Node2D"]
 
@@ -25,56 +25,62 @@ position = Vector2(0, 88)
 [node name="Col" type="CollisionShape2D" parent="Terrain/Ground"]
 shape = SubResource("ground_shape")
 
-[node name="Plat1" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+[node name="Branch1" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
 position = Vector2(-130, 60)
 
-[node name="Col" type="CollisionShape2D" parent="Terrain/Plat1"]
+[node name="Col" type="CollisionShape2D" parent="Terrain/Branch1"]
 shape = SubResource("plat_med")
 
-[node name="Plat2" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
-position = Vector2(-45, 40)
+[node name="Branch2" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(110, 46)
 
-[node name="Col" type="CollisionShape2D" parent="Terrain/Plat2"]
+[node name="Col" type="CollisionShape2D" parent="Terrain/Branch2"]
 shape = SubResource("plat_small")
 
-[node name="Plat3" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
-position = Vector2(47, 20)
+[node name="Branch3" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(-48, 28)
 
-[node name="Col" type="CollisionShape2D" parent="Terrain/Plat3"]
-shape = SubResource("plat_med")
-
-[node name="Plat4" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
-position = Vector2(140, 45)
-
-[node name="Col" type="CollisionShape2D" parent="Terrain/Plat4"]
-shape = SubResource("plat_med")
-
-[node name="Plat5" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
-position = Vector2(0, -10)
-
-[node name="Col" type="CollisionShape2D" parent="Terrain/Plat5"]
-shape = SubResource("plat_med")
-
-[node name="Plat6" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
-position = Vector2(-105, 0)
-
-[node name="Col" type="CollisionShape2D" parent="Terrain/Plat6"]
+[node name="Col" type="CollisionShape2D" parent="Terrain/Branch3"]
 shape = SubResource("plat_small")
 
-[node name="Plat7" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
-position = Vector2(95, -15)
+[node name="Branch4" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(32, 8)
 
-[node name="Col" type="CollisionShape2D" parent="Terrain/Plat7"]
+[node name="Col" type="CollisionShape2D" parent="Terrain/Branch4"]
+shape = SubResource("plat_med")
+
+[node name="Branch5" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(142, -2)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/Branch5"]
 shape = SubResource("plat_small")
+
+[node name="Branch6" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(-118, -22)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/Branch6"]
+shape = SubResource("plat_small")
+
+[node name="Branch7" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(82, -42)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/Branch7"]
+shape = SubResource("plat_small")
+
+[node name="Branch8" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(-12, -65)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/Branch8"]
+shape = SubResource("plat_med")
 
 [node name="SpawnPoint1" type="Marker2D" parent="."]
 position = Vector2(-140, 44)
 
 [node name="SpawnPoint2" type="Marker2D" parent="."]
-position = Vector2(140, 30)
+position = Vector2(145, -18)
 
 [node name="SpawnPoint3" type="Marker2D" parent="."]
-position = Vector2(-50, 24)
+position = Vector2(-54, 12)
 
 [node name="SpawnPoint4" type="Marker2D" parent="."]
-position = Vector2(50, 5)
+position = Vector2(87, -58)

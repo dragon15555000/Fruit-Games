@@ -83,11 +83,11 @@ var rot_time_remaining: float = BASE_ROT_TIME
 
 # ── Fizyka ────────────────────────────────────────────────────────────────────
 var coyote_time_activated: bool  = false
-const JUMP_HEIGHT:  float = -230.0
-var   gravity:      float = 12.0
-const MAX_GRAVITY:  float = 14.5
-const ACCELERATION: float = 8.0
-const FRICTION:     float = 10.0
+const JUMP_HEIGHT:  float = -270.0
+var   gravity:      float = 15.0
+const MAX_GRAVITY:  float = 20.0
+const ACCELERATION: float = 16.0
+const FRICTION:     float = 18.0
 
 
 # ─────────────────────────────────────────────
