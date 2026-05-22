@@ -78,7 +78,7 @@ var poison_spawn_timer: float = 0.0
 #   rot_shot   — trafiony traci 3s z rot_time
 #   antirot    — +5s na starcie rundy
 #   rot_accelerator — obsługiwany w apply_passive (skraca wrogom w zasięgu)
-const BASE_ROT_TIME: float = 120.0
+const BASE_ROT_TIME: float = 210.0
 var rot_time_remaining: float = BASE_ROT_TIME
 
 # ── Fizyka ────────────────────────────────────────────────────────────────────

@@ -67,64 +67,15 @@ func _ready() -> void:
 	_spawn_player(Global.player4_character, spawns[3], "p4")
 
 	AudioManager.play_bgm()
+	$Gnicie.start()
 
 	# HUD
 	var hud_scene = preload("res://scenes/ui/hud.tscn")
 	var hud_instance = hud_scene.instantiate()
 	add_child(hud_instance)
 
-	_show_taunts()
 
-
-var _taunt_lines: Dictionary = {
-	"Strawberry": ["Zaraz zrobię z ciebie dżem!", "Mam na ciebie słodkie plany...", "Czas na owocową jatkę!", "Truskawka nie zna litości!"],
-	"Orange":     ["Wycisnę z ciebie soki!", "Gotowy na pomarańczową papkę?", "Vitamin C — prosto w twarz!", "Trafię cię w skórkę!"],
-	"Pineapple":  ["Zaraz ci zrobię ananasowy deser!", "Kolce? To moje pieszczotki!", "Melee zawsze wygrywa!", "Twardszy niż myślisz!"],
-	"Grape":      ["Małe, ale wyjątkowo groźne!", "Zasypię cię pestkami!", "Prędkość to moja broń!", "Winogrono idzie na wojnę!"],
-	"Lemon":      ["Kwaśno ci będzie!", "Zobaczysz cytrynowe gwiazdki!", "Mam kwaśny plan na ciebie!", "Żółty, ale nie tchórzliwy!"],
-	"Watermelon": ["Zaraz ci zrobię marmoladę!", "Arbuz miażdży wszystko!", "Pestką prosto w oko!", "Mam na ciebie duże, zielone oko!"],
-}
-
-func _show_taunts() -> void:
-	var taunt_nodes: Array = []
-	for child in $Players.get_children():
-		var char_name = player_characters.get(child.name, "")
-		if char_name == "" or not _taunt_lines.has(char_name):
-			continue
-		var lines: Array = _taunt_lines[char_name]
-		var text: String = lines[randi() % lines.size()]
-
-		var bg = ColorRect.new()
-		bg.color = Color(0.98, 0.98, 0.96, 0.92)
-		bg.size = Vector2(76, 26)
-		bg.position = Vector2(-38, -62)
-		child.add_child(bg)
-
-		var lbl = Label.new()
-		lbl.text = text
-		lbl.size = Vector2(76, 26)
-		lbl.position = Vector2(-38, -62)
-		lbl.add_theme_font_size_override("font_size", 5)
-		lbl.add_theme_color_override("font_color", Color(0.08, 0.08, 0.08))
-		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		child.add_child(lbl)
-
-		# Trójkąt dymka (wskaźnik w dół)
-		var tri = Polygon2D.new()
-		tri.polygon = PackedVector2Array([Vector2(-4, -36), Vector2(4, -36), Vector2(0, -30)])
-		tri.color = Color(0.98, 0.98, 0.96, 0.92)
-		child.add_child(tri)
-
-		taunt_nodes.append_array([bg, lbl, tri])
-
-	# Odczekaj 3 sekundy, potem usuń dymki i startuj gnicie
-	await get_tree().create_timer(3.0).timeout
-	for n in taunt_nodes:
-		if is_instance_valid(n):
-			n.queue_free()
-	$Gnicie.start()
+var _taunt_lines: Dictionary = {}  # unused — kept for future use
 
 
 func _spawn_player(character_name: String, spawn_pos: Vector2, player_prefix: String) -> void:

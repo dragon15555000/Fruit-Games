@@ -13,7 +13,7 @@ zoom = Vector2(3, 3)
 [node name="Players" type="Node" parent="."]
 
 [node name="Gnicie" type="Timer" parent="."]
-wait_time = 120.0
+wait_time = 210.0
 one_shot = true
 
 [connection signal="timeout" from="Gnicie" to="." method="_on_gnicie_timeout"]
