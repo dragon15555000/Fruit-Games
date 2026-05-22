@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://lemon_bullet_001"]
+[gd_scene load_steps=4 format=3 uid="uid://dlmn8a2x9b4c7e"]
 
 [ext_resource type="Script" path="res://scripts/bullets/bullet.gd" id="1_cx22g"]
 
