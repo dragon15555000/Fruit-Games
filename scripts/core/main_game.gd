@@ -165,6 +165,7 @@ func _setup_kill_feed() -> void:
 func _on_shoot(pos: Vector2, dir: Vector2, player_prefix: String) -> void:
 	if _ending_round:
 		return
+	AudioManager.notify_combat()
 	var char_name = player_characters.get(player_prefix, "")
 
 	# Ananas = MELEE — cios obszarowy zamiast pocisku
