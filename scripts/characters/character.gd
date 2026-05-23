@@ -107,16 +107,18 @@ func _ready() -> void:
 	base_speed = float(Global.characters[character_name]["speed"])
 	max_speed  = base_speed
 
-	# Aplikuj mody startowe (on_apply) — prędkość, HP, flagi
-	ModifierSystem.apply_on_ready(character_name, self)
-
-	# ModifierState — przed RotComponent żeby preservative_timer był gotowy
+	# ModifierState musi istnieć przed apply_on_ready — proxy settery są
+	# chronione przez `if _modifier_state`, więc bez tego wax_coat,
+	# preservative, stone_seed itp. byłyby cicho ignorowane przy starcie.
 	_modifier_state = preload("res://scripts/characters/modifier_state.gd").new()
 	_modifier_state.name = "ModifierState"
 	add_child(_modifier_state)
 	_modifier_state.setup(character_name)
 
-	# RotComponent — po apply_on_ready żeby antirot zdążył zapisać bonus
+	# Aplikuj mody startowe (on_apply) — prędkość, HP, flagi modów i Global.rot_bonus
+	ModifierSystem.apply_on_ready(character_name, self)
+
+	# RotComponent po apply_on_ready — antirot zdążył już zapisać bonus w Global.rot_bonus
 	_rot_component = preload("res://scripts/characters/rot_component.gd").new()
 	_rot_component.name = "RotComponent"
 	add_child(_rot_component)
