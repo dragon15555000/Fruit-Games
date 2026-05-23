@@ -19,7 +19,7 @@ func trigger_recoil() -> void:
 
 
 func _create_name_label(char_name: String) -> void:
-	var lbl := Label.new()
+	var lbl: Label = Label.new()
 	lbl.text = char_name
 	lbl.add_theme_font_size_override("font_size", 4)
 	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.8))
@@ -45,7 +45,7 @@ func _process(delta: float) -> void:
 	_sprite.rotation = 0.0
 
 	if not parent.is_on_floor():
-		var stretch := clamp(abs(parent.velocity.y) / 500.0, 0.0, 0.3)
+		var stretch: float = clamp(absf(float(parent.velocity.y)) / 500.0, 0.0, 0.3)
 		_sprite.scale = Vector2(1.0 - stretch * 0.5, 1.0 + stretch)
 	else:
 		if abs(parent.velocity.x) > 5.0:
