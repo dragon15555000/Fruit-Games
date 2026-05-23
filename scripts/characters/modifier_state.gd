@@ -1,8 +1,7 @@
 extends Node
-## ModifierState — stan wszystkich modyfikatorów postaci.
+## ModifierState — stan modyfikatorów postaci.
 ## Tworzony programatycznie przez character.gd w _ready().
-## Obsługuje odliczanie timerów i poison stacks w swoim _physics_process.
-## ModifierSystem odczytuje pola przez proxy na character.gd — zero zmian zewnętrznych.
+## ModifierSystem odczytuje i zapisuje pola przez proxy w character.gd.
 
 # ── Flagi ─────────────────────────────────────────────────────────────────────
 var wax_active:              bool  = false
@@ -26,14 +25,16 @@ var poison_stack_timers: Array[float] = []
 var poison_tick_timer:   float        = 0.0
 
 # ── Poison trail (legacy mod) ─────────────────────────────────────────────────
-var poison_zone_scene  = preload("res://scenes/effects/poison_zone.tscn")
-var poison_spawn_timer: float = 0.0
+var poison_zone_scene: Resource = null
+var poison_spawn_timer: float   = 0.0
 
 var _char_name: String = ""
 
 
 func setup(char_name: String) -> void:
 	_char_name = char_name
+	if ResourceLoader.exists("res://scenes/effects/poison_zone.tscn"):
+		poison_zone_scene = load("res://scenes/effects/poison_zone.tscn")
 
 
 func apply_slow() -> void:

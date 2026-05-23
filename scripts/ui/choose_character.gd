@@ -35,15 +35,17 @@ func _on_pick_synced() -> void:
 
 func update_ui():
 	var slot = Global.current_picking_player
-	var slot_type = Global.slot_types.get(slot, "player")
 
-	# Przeskocz sloty "off"
+	# Przeskocz sloty "off" — każdy pusty pick przesuwa current_picking_player
 	while slot <= 4 and Global.slot_types.get(slot, "off") == "off":
-		Global.pick_character("")  # pusty pick — slot wyłączony
+		Global.pick_character("")
 		slot = Global.current_picking_player
 		if Global.all_picked():
 			_start_game()
 			return
+
+	# slot_type oblicz PO while loop — slot wskazuje aktualny aktywny slot
+	var slot_type = Global.slot_types.get(slot, "player")
 
 	if slot_type == "bot":
 		picking_label.text = "Slot %d (Bot) wybiera..." % slot

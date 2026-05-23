@@ -39,6 +39,45 @@ func set_setting(section: String, key: String, value) -> void:
 	save_settings()
 	apply_settings()
 
+func save_keybinding(action: String, event: InputEvent) -> void:
+	if event is InputEventKey:
+		config.set_value("controls", action, "key:%d" % event.keycode)
+	elif event is InputEventMouseButton:
+		config.set_value("controls", action, "mouse:%d" % int(event.button_index))
+	save_settings()
+
+
+func reset_keybindings() -> void:
+	if config.has_section("controls"):
+		for key in config.get_section_keys("controls"):
+			config.erase_section_key("controls", key)
+	save_settings()
+	InputMap.load_from_project_settings()
+
+
+func apply_keybindings() -> void:
+	if not config.has_section("controls"):
+		return
+	for action in config.get_section_keys("controls"):
+		if not InputMap.has_action(action):
+			continue
+		var val: String = config.get_value("controls", action, "")
+		var ev: InputEvent = null
+		if val.begins_with("key:"):
+			var ek  = InputEventKey.new()
+			ek.keycode = int(val.substr(4))
+			ev = ek
+		elif val.begins_with("mouse:"):
+			var em = InputEventMouseButton.new()
+			em.button_index = int(val.substr(6))
+			ev = em
+		if ev:
+			for old in InputMap.action_get_events(action).duplicate():
+				if old is InputEventKey or old is InputEventMouseButton:
+					InputMap.action_erase_event(action, old)
+			InputMap.action_add_event(action, ev)
+
+
 func apply_settings() -> void:
 	# Video
 	var is_fullscreen = get_setting("video", "fullscreen")
@@ -64,3 +103,5 @@ func apply_settings() -> void:
 	var sfx_bus = AudioServer.get_bus_index("SFX")
 	if sfx_bus != -1:
 		AudioServer.set_bus_volume_db(sfx_bus, linear_to_db(sfx_vol))
+
+	apply_keybindings()

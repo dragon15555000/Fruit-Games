@@ -21,21 +21,15 @@ var action_right: String = ""
 var action_jump:  String = ""
 var action_shoot: String = ""
 
-# Sieć — ID peera właściciela tej postaci (0 = tryb lokalny)
-var network_owner_id: int   = 0
-var _net_sync_timer:  float = 0.0
+# Sieć — delegowane do NetSync (tworzony w _ready)
+var _net_sync: Node = null
 
-# Interpolacja sieciowa — wygładza ruch zdalnych postaci
-var _net_target_pos: Vector2    = Vector2.ZERO
-const NET_LERP_SPEED: float     = 20.0
-var _is_remote: bool = false
+var network_owner_id: int:
+	get: return _net_sync.owner_id if _net_sync else 0
+	set(v): if _net_sync: _net_sync.owner_id = v
 var is_remote: bool:
-	get:
-		return _is_remote
-	set(value):
-		_is_remote = value
-		if value:
-			_net_target_pos = global_position
+	get: return _net_sync.is_remote if _net_sync else false
+	set(v): if _net_sync: _net_sync.is_remote = v
 
 var max_speed:  float = 0.0
 var base_speed: float = 0.0
@@ -113,8 +107,9 @@ func _ready() -> void:
 	base_speed = float(Global.characters[character_name]["speed"])
 	max_speed  = base_speed
 
-	# Aplikuj mody startowe (on_apply) — prędkość, HP, flagi
-	ModifierSystem.apply_on_ready(character_name, self)
+	# Wszystkie komponenty muszą istnieć PRZED apply_on_ready —
+	# mody piszą przez proxy settery chronione przez if _modifier_state / if _rot_component.
+	# Antirot robi rot_time_remaining += 5.0, więc RotComponent musi być gotowy.
 
 	# ModifierState — przed RotComponent żeby preservative_timer był gotowy
 	_modifier_state = preload("res://scripts/characters/modifier_state.gd").new()
@@ -122,7 +117,6 @@ func _ready() -> void:
 	add_child(_modifier_state)
 	_modifier_state.setup(character_name)
 
-	# RotComponent — po apply_on_ready żeby antirot zdążył zapisać bonus
 	_rot_component = preload("res://scripts/characters/rot_component.gd").new()
 	_rot_component.name = "RotComponent"
 	add_child(_rot_component)
@@ -133,6 +127,14 @@ func _ready() -> void:
 	_visuals.name = "CharacterVisuals"
 	add_child(_visuals)
 	_visuals.setup(character_name, fruit_sprite)
+
+	_net_sync = preload("res://scripts/characters/net_sync.gd").new()
+	_net_sync.name = "NetSync"
+	add_child(_net_sync)
+	_net_sync.setup(0)
+
+	# apply_on_ready po komponentach — wszystkie proxy gotowe
+	ModifierSystem.apply_on_ready(character_name, self)
 
 	Reloading.wait_time  = Global.characters[character_name]["fire_rate"]
 	health_bar.max_value = Global.base_characters[character_name]["hp"]
@@ -185,18 +187,12 @@ func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
 
 	return dmg
 
-## Odbiera pakiet pozycji/prędkości od właściciela zdalnej postaci.
-func receive_remote_state(pos: Vector2, vel: Vector2) -> void:
-	_net_target_pos = pos
-	velocity        = vel
-
 ## Śmierć — wywołaj tylko przez tę funkcję, nigdy queue_free() bezpośrednio.
 func die() -> void:
 	if _is_dying:
-
 		return
 	_is_dying = true
-	
+
 	AudioManager.play_sound("death")
 	if Global.main_game:
 		Global.main_game.add_shake(15.0)
@@ -206,14 +202,6 @@ func die() -> void:
 	Global.death_order.append(character_name)
 
 	queue_free()
-
-
-# ─────────────────────────────────────────────
-# PROCESS (interpolacja sieciowa — reszta w CharacterVisuals)
-# ─────────────────────────────────────────────
-func _process(_delta: float) -> void:
-	if is_remote:
-		global_position = global_position.lerp(_net_target_pos, clampf(_delta * NET_LERP_SPEED, 0.0, 1.0))
 
 
 # ─────────────────────────────────────────────
@@ -292,18 +280,3 @@ func _physics_process(delta: float) -> void:
 
 	velocity.y += gravity
 	move_and_slide()
-
-	# W trybie sieciowym właściciel synchronizuje pozycję do pozostałych (~30 Hz)
-	if Global.is_network_game and network_owner_id != 0:
-		_net_sync_timer += delta
-		if _net_sync_timer >= 0.033:
-			_net_sync_timer = 0.0
-			_rpc_sync_pos.rpc(position, velocity)
-
-
-# ─────────────────────────────────────────────
-# NETWORK POSITION SYNC
-# ─────────────────────────────────────────────
-@rpc("any_peer", "call_remote", "unreliable")
-func _rpc_sync_pos(pos: Vector2, vel: Vector2) -> void:
-	receive_remote_state(pos, vel)

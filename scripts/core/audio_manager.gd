@@ -12,6 +12,10 @@ const _SOUND_PATHS: Dictionary = {
 	"bgm_combat": "res://assets/audio/bgm_combat.wav",
 }
 
+# Dźwięki z losową zmianą tonacji — każde trafienie i skok brzmi unikalnie
+const _PITCH_RANDOMIZED: Array = ["hit", "jump", "shoot"]
+const _PITCH_VARIANCE:   float = 0.1  # ±10% tonacji
+
 var _sounds: Dictionary = {}
 
 # ── Odtwarzacze muzyki (równoległy crossfade) ─────────────────────────────────
@@ -78,9 +82,13 @@ func play_sound(sound_name: String, pitch_scale: float = 1.0, volume_db: float =
 		push_warning("AudioManager: nieznany dźwięk '%s'" % sound_name)
 		return
 	var player := AudioStreamPlayer.new()
-	player.stream      = _sounds[sound_name]
-	player.pitch_scale = pitch_scale
-	player.volume_db   = volume_db
+	player.stream = _sounds[sound_name]
+	# Losowa zmiana tonacji dla powtarzalnych dźwięków — eliminuje efekt monotonii
+	if pitch_scale == 1.0 and sound_name in _PITCH_RANDOMIZED:
+		player.pitch_scale = 1.0 + randf_range(-_PITCH_VARIANCE, _PITCH_VARIANCE)
+	else:
+		player.pitch_scale = pitch_scale
+	player.volume_db = volume_db
 	add_child(player)
 	player.play()
 	player.finished.connect(player.queue_free)
@@ -99,7 +107,7 @@ func stop_bgm() -> void:
 
 
 ## Wywołaj przy strzale/trafieniu — muzyka przechodzi w tryb walki.
-## Po %d sekundach ciszy automatycznie wraca do ambient. % COMBAT_REVERT_TIME
+## Po COMBAT_REVERT_TIME sekundach ciszy automatycznie wraca do ambient.
 func notify_combat() -> void:
 	_combat_timer = COMBAT_REVERT_TIME
 	_set_combat_mode()

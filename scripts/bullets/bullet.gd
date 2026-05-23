@@ -7,6 +7,10 @@ var shooter_name: String  = ""
 
 const GRAVITY: float = 75.0
 
+# ── Smuga ─────────────────────────────────────────────────────────────────────
+const TRAIL_LEN: int = 16
+var _trail: Array[Vector2] = []
+
 # ── Spinning ──────────────────────────────────────────────────────────────────
 var spin_timer:     float = 0.0
 var spin_direction: float = 1.0
@@ -43,7 +47,7 @@ func setup(pos: Vector2, dir: Vector2, p_shooter_name: String) -> void:
 	var mods = Global.modifiers.get(shooter_name, [])
 
 	# Prędkość — sniper_seed zwiększa o 25%
-	bullet_speed = 180.0
+	bullet_speed = 130.0
 	if mods.has("sniper_seed"):
 		bullet_speed *= 1.25
 
@@ -100,6 +104,36 @@ func _physics_process(delta: float) -> void:
 
 	velocity.y += GRAVITY * delta
 	position   += velocity * delta
+
+	# ── Smuga — historia pozycji ──────────────────────────────────────────
+	_trail.push_back(global_position)
+	if _trail.size() > TRAIL_LEN:
+		_trail.pop_front()
+	queue_redraw()
+
+	# ── Kolizja pocisk–pocisk ─────────────────────────────────────────────
+	for other in get_tree().get_nodes_in_group("Bullet"):
+		if other == self or not is_instance_valid(other): continue
+		if other.get("shooter_name") == shooter_name:    continue
+		if global_position.distance_to(other.global_position) < 5.0:
+			Global.spawn_particles(global_position, Color(1.0, 0.85, 0.1), 10)
+			other.call_deferred("queue_free")
+			call_deferred("queue_free")
+			return
+
+
+# ─────────────────────────────────────────────
+# SMUGA
+# ─────────────────────────────────────────────
+func _draw() -> void:
+	var n = _trail.size()
+	if n < 2:
+		return
+	for i in range(n):
+		var t     = float(i) / float(TRAIL_LEN)
+		var alpha = t * t * 0.7          # kwadratowy zanik — ogon znika szybciej
+		var r     = lerp(0.4, 2.2, t)    # rozmiar rośnie ku przodowi
+		draw_circle(to_local(_trail[i]), r, Color(1.0, 0.9, 0.4, alpha))
 
 
 # ─────────────────────────────────────────────
