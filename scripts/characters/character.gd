@@ -11,7 +11,6 @@ extends CharacterBody2D
 @onready var health_bar:       ProgressBar = $HealthBar
 @onready var fruit_sprite:     Node2D      = $FruitSprite
 
-var rot_bar: ProgressBar
 var _anim_time: float = 0.0
 var _recoil_time: float = 0.0
 
@@ -73,13 +72,13 @@ var poison_tick_timer:   float        = 0.0
 var poison_zone_scene   = preload("res://scenes/effects/poison_zone.tscn")
 var poison_spawn_timer: float = 0.0
 
-# ── Per-gracz gnicie (rot) ─────────────────────────────────────────────────
-# Bazowy czas gnicia = 120s. Mody zmieniają rot_time_remaining:
-#   rot_shot   — trafiony traci 3s z rot_time
-#   antirot    — +5s na starcie rundy
-#   rot_accelerator — obsługiwany w apply_passive (skraca wrogom w zasięgu)
-const BASE_ROT_TIME: float = 210.0
-var rot_time_remaining: float = BASE_ROT_TIME
+# ── Gnicie — delegowane do RotComponent (tworzony w _ready) ──────────────────
+var _rot_component: Node = null
+
+var rot_time_remaining: float:
+	get: return _rot_component.rot_time_remaining if _rot_component else 0.0
+	set(v):
+		if _rot_component: _rot_component.rot_time_remaining = v
 
 # ── Fizyka ────────────────────────────────────────────────────────────────────
 var coyote_time_activated: bool  = false
@@ -103,24 +102,15 @@ func _ready() -> void:
 	# Aplikuj mody startowe (on_apply) — prędkość, HP, flagi
 	ModifierSystem.apply_on_ready(character_name, self)
 
-	# Per-gracz gnicie — po apply_on_ready żeby antirot mogł dodać +5s
-	rot_time_remaining = BASE_ROT_TIME + Global.rot_bonus.get(character_name, 0.0)
+	# RotComponent — tworzone po apply_on_ready żeby antirot zdążył zapisać bonus
+	_rot_component = preload("res://scripts/characters/rot_component.gd").new()
+	_rot_component.name = "RotComponent"
+	add_child(_rot_component)
+	_rot_component.setup(character_name)
 
 	Reloading.wait_time  = Global.characters[character_name]["fire_rate"]
 	health_bar.max_value = Global.base_characters[character_name]["hp"]
 	health_bar.value     = Global.characters[character_name]["hp"]
-
-	# Wizualny timer gnicia
-	rot_bar = ProgressBar.new()
-	rot_bar.max_value = BASE_ROT_TIME
-	rot_bar.value = rot_time_remaining
-	rot_bar.show_percentage = false
-	rot_bar.size = Vector2(16, 2)
-	rot_bar.position = Vector2(-8, -17)
-	var sb = StyleBoxFlat.new()
-	sb.bg_color = Color(0.2, 0.8, 0.2)
-	rot_bar.add_theme_stylebox_override("fill", sb)
-	add_child(rot_bar)
 
 	# Etykieta z nazwą nad postacią
 	var lbl = Label.new()
@@ -285,12 +275,6 @@ func _physics_process(delta: float) -> void:
 			if stacks > 0:
 				Global.take_damage(character_name, 5.0 * stacks, "🧪 Trucizna")
 				Global.spawn_particles(global_position, Color(0.5, 0.0, 0.8), 10)
-
-	# Per-gracz gnicie — gdy czas się skończy, gracz umiera
-	rot_time_remaining -= delta
-	if rot_bar: rot_bar.value = rot_time_remaining
-	if rot_time_remaining <= 0.0:
-		Global.take_damage(character_name, 9999.0, "🦠 Zgnilizna")
 
 	# Mody pasywne
 	ModifierSystem.apply_passive(character_name, delta, self)
