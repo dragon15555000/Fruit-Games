@@ -47,30 +47,45 @@ var base_speed: float = 0.0
 # die() wywołuje się wielokrotnie → death_order ma duplikaty → crash w ranking.
 var _is_dying: bool = false
 
-# ── Stan modów (flagi odczytywane przez ModifierSystem) ──────────────────────
-var wax_active:              bool  = false   # wax_coat
-var second_fruit_used:       bool  = false   # second_fruit
-var preservative_timer:      float = 0.0     # preservative — odlicza w dół
-var regen_timer:             float = 2.0     # still_green
-var rot_explosion_triggered: bool  = false   # rot_explosion
-var armor_flat:              float = 0.0     # stone_seed
-var seed_collector_bonus:    float = 0.0     # seed_collector
-var streak_count:            int   = 0       # fruit_streak
-var streak_bonus_ready:      bool  = false   # fruit_streak
+# ── Stan modów — delegowany do ModifierState (tworzony w _ready) ─────────────
+var _modifier_state: Node = null
 
-# ── Slow (mod: sticky / inne) ─────────────────────────────────────────────────
-var is_slowed:  bool  = false
-var slow_timer: float = 0.0
-
-# ── Poison incoming (stacks z decay) ─────────────────────────────────────────
-# Każdy element to pozostały czas życia stacka (sekundy).
-# apply_poison() dodaje nowy stack (3s), _physics_process odlicza i usuwa wygasłe.
-var poison_stack_timers: Array[float] = []
-var poison_tick_timer:   float        = 0.0
-
-# ── Poison trail (stary mod: poison) ─────────────────────────────────────────
-var poison_zone_scene   = preload("res://scenes/effects/poison_zone.tscn")
-var poison_spawn_timer: float = 0.0
+# Proxy do pól ModifierState — ModifierSystem i inne zewnętrzne skrypty
+# korzystają z tych właściwości bez wiedzy o wewnętrznej strukturze.
+var wax_active: bool:
+	get: return _modifier_state.wax_active if _modifier_state else false
+	set(v): if _modifier_state: _modifier_state.wax_active = v
+var second_fruit_used: bool:
+	get: return _modifier_state.second_fruit_used if _modifier_state else false
+	set(v): if _modifier_state: _modifier_state.second_fruit_used = v
+var rot_explosion_triggered: bool:
+	get: return _modifier_state.rot_explosion_triggered if _modifier_state else false
+	set(v): if _modifier_state: _modifier_state.rot_explosion_triggered = v
+var streak_bonus_ready: bool:
+	get: return _modifier_state.streak_bonus_ready if _modifier_state else false
+	set(v): if _modifier_state: _modifier_state.streak_bonus_ready = v
+var preservative_timer: float:
+	get: return _modifier_state.preservative_timer if _modifier_state else 0.0
+	set(v): if _modifier_state: _modifier_state.preservative_timer = v
+var regen_timer: float:
+	get: return _modifier_state.regen_timer if _modifier_state else 2.0
+	set(v): if _modifier_state: _modifier_state.regen_timer = v
+var armor_flat: float:
+	get: return _modifier_state.armor_flat if _modifier_state else 0.0
+	set(v): if _modifier_state: _modifier_state.armor_flat = v
+var seed_collector_bonus: float:
+	get: return _modifier_state.seed_collector_bonus if _modifier_state else 0.0
+	set(v): if _modifier_state: _modifier_state.seed_collector_bonus = v
+var streak_count: int:
+	get: return _modifier_state.streak_count if _modifier_state else 0
+	set(v): if _modifier_state: _modifier_state.streak_count = v
+var is_slowed: bool:
+	get: return _modifier_state.is_slowed if _modifier_state else false
+var poison_zone_scene: Resource:
+	get: return _modifier_state.poison_zone_scene if _modifier_state else null
+var poison_spawn_timer: float:
+	get: return _modifier_state.poison_spawn_timer if _modifier_state else 0.0
+	set(v): if _modifier_state: _modifier_state.poison_spawn_timer = v
 
 # ── Gnicie — delegowane do RotComponent (tworzony w _ready) ──────────────────
 var _rot_component: Node = null
@@ -102,7 +117,13 @@ func _ready() -> void:
 	# Aplikuj mody startowe (on_apply) — prędkość, HP, flagi
 	ModifierSystem.apply_on_ready(character_name, self)
 
-	# RotComponent — tworzone po apply_on_ready żeby antirot zdążył zapisać bonus
+	# ModifierState — przed RotComponent żeby preservative_timer był gotowy
+	_modifier_state = preload("res://scripts/characters/modifier_state.gd").new()
+	_modifier_state.name = "ModifierState"
+	add_child(_modifier_state)
+	_modifier_state.setup(character_name)
+
+	# RotComponent — po apply_on_ready żeby antirot zdążył zapisać bonus
 	_rot_component = preload("res://scripts/characters/rot_component.gd").new()
 	_rot_component.name = "RotComponent"
 	add_child(_rot_component)
@@ -144,16 +165,8 @@ func get_input() -> void:
 # PUBLICZNE API
 # ─────────────────────────────────────────────
 
-func apply_slow() -> void:
-	if preservative_timer > 0.0:
-		return
-	is_slowed  = true
-	slow_timer = 3.0
-
-func apply_poison() -> void:
-	if preservative_timer > 0.0:
-		return
-	poison_stack_timers.append(3.0)  # nowy stack trwa 3 sekundy
+func apply_slow()   -> void: if _modifier_state: _modifier_state.apply_slow()
+func apply_poison() -> void: if _modifier_state: _modifier_state.apply_poison()
 
 ## Główna brama obrażeń — wywoływana z bullet.gd.
 ## Zwraca faktyczne obrażenia po modyfikacjach (0.0 = zablokowane).
@@ -249,32 +262,6 @@ func _physics_process(delta: float) -> void:
 		return
 
 	health_bar.value = Global.characters[character_name]["hp"]
-
-	# Konserwant — odliczaj timer
-	if preservative_timer > 0.0:
-		preservative_timer -= delta
-
-	# Slow
-	if is_slowed:
-		slow_timer -= delta
-		if slow_timer <= 0.0:
-			is_slowed = false
-
-	# Poison (incoming stacks z decay) — 5 DMG × aktywne stacki co sekundę
-	if poison_stack_timers.size() > 0:
-		# Odliczaj czas życia każdego stacka
-		for i in range(poison_stack_timers.size() - 1, -1, -1):
-			poison_stack_timers[i] -= delta
-			if poison_stack_timers[i] <= 0.0:
-				poison_stack_timers.remove_at(i)
-		# Tick obrażeń co 1s
-		poison_tick_timer -= delta
-		if poison_tick_timer <= 0.0:
-			poison_tick_timer = 1.0
-			var stacks = poison_stack_timers.size()
-			if stacks > 0:
-				Global.take_damage(character_name, 5.0 * stacks, "🧪 Trucizna")
-				Global.spawn_particles(global_position, Color(0.5, 0.0, 0.8), 10)
 
 	# Mody pasywne
 	ModifierSystem.apply_passive(character_name, delta, self)
