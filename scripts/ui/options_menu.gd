@@ -24,6 +24,10 @@ func _on_music_slider_value_changed(value: float) -> void:
 func _on_sfx_slider_value_changed(value: float) -> void:
 	SettingsManager.set_setting("audio", "sfx_volume", value)
 
+func _on_keys_pressed() -> void:
+	AudioManager.play_ui_click()
+	get_tree().change_scene_to_file("res://scenes/ui/keybindings.tscn")
+
 func _on_back_pressed() -> void:
 	AudioManager.play_ui_click()
 	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
