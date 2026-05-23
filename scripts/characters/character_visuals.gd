@@ -45,7 +45,7 @@ func _process(delta: float) -> void:
 	_sprite.rotation = 0.0
 
 	if not parent.is_on_floor():
-		var stretch := clamp(abs(parent.velocity.y) / 500.0, 0.0, 0.3)
+		var stretch: float = clamp(absf(float(parent.velocity.y)) / 500.0, 0.0, 0.3)
 		_sprite.scale = Vector2(1.0 - stretch * 0.5, 1.0 + stretch)
 	else:
 		if abs(parent.velocity.x) > 5.0:
