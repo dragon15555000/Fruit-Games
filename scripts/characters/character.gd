@@ -107,34 +107,32 @@ func _ready() -> void:
 	base_speed = float(Global.characters[character_name]["speed"])
 	max_speed  = base_speed
 
-	# ModifierState musi istnieć przed apply_on_ready — proxy settery są
-	# chronione przez `if _modifier_state`, więc bez tego wax_coat,
-	# preservative, stone_seed itp. byłyby cicho ignorowane przy starcie.
+	# Wszystkie komponenty muszą istnieć PRZED apply_on_ready —
+	# mody piszą przez proxy settery chronione przez if _modifier_state / if _rot_component.
+	# Antirot robi rot_time_remaining += 5.0, więc RotComponent musi być gotowy.
+
 	_modifier_state = preload("res://scripts/characters/modifier_state.gd").new()
 	_modifier_state.name = "ModifierState"
 	add_child(_modifier_state)
 	_modifier_state.setup(character_name)
 
-	# Aplikuj mody startowe (on_apply) — prędkość, HP, flagi modów i Global.rot_bonus
-	ModifierSystem.apply_on_ready(character_name, self)
-
-	# RotComponent po apply_on_ready — antirot zdążył już zapisać bonus w Global.rot_bonus
 	_rot_component = preload("res://scripts/characters/rot_component.gd").new()
 	_rot_component.name = "RotComponent"
 	add_child(_rot_component)
 	_rot_component.setup(character_name)
 
-	# CharacterVisuals — etykieta nazwy + animacja sprite'a
 	_visuals = preload("res://scripts/characters/character_visuals.gd").new()
 	_visuals.name = "CharacterVisuals"
 	add_child(_visuals)
 	_visuals.setup(character_name, fruit_sprite)
 
-	# NetSync — synchronizacja sieciowa pozycji/prędkości
 	_net_sync = preload("res://scripts/characters/net_sync.gd").new()
 	_net_sync.name = "NetSync"
 	add_child(_net_sync)
-	_net_sync.setup(0)  # owner_id ustawia main_game.gd po spawnie
+	_net_sync.setup(0)
+
+	# apply_on_ready po komponentach — wszystkie proxy gotowe
+	ModifierSystem.apply_on_ready(character_name, self)
 
 	Reloading.wait_time  = Global.characters[character_name]["fire_rate"]
 	health_bar.max_value = Global.base_characters[character_name]["hp"]
