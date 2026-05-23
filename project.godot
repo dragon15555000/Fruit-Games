@@ -15,13 +15,6 @@ run/main_scene="res://scenes/ui/splash_screen.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://icon.svg"
 
-[display]
-
-window/size/viewport_width=1152
-window/size/viewport_height=648
-window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
-
 [autoload]
 
 Global="*res://scenes/global.tscn"
@@ -29,6 +22,10 @@ ModifierSystem="*res://scripts/core/Modifier_System.gd"
 MultiplayerManager="*res://scripts/multiplayer/multiplayermanager.gd"
 AudioManager="*res://scripts/core/audio_manager.gd"
 SettingsManager="*res://scripts/core/settings_manager.gd"
+
+[display]
+
+window/stretch/mode="canvas_items"
 
 [global_group]
 
