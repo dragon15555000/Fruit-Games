@@ -1,12 +1,18 @@
-[gd_scene load_steps=4 format=3 uid="uid://map_fruit_bowl"]
+[gd_scene load_steps=6 format=3 uid="uid://map_fruit_bowl"]
 
 [ext_resource type="Script" path="res://scripts/map/map_fruit_bowl.gd" id="1_bg"]
 
 [sub_resource type="RectangleShape2D" id="ground_shape"]
 size = Vector2(384, 40)
 
-[sub_resource type="RectangleShape2D" id="plat_shape"]
-size = Vector2(92, 17)
+[sub_resource type="RectangleShape2D" id="plat_wide"]
+size = Vector2(80, 12)
+
+[sub_resource type="RectangleShape2D" id="plat_mid"]
+size = Vector2(70, 12)
+
+[sub_resource type="RectangleShape2D" id="plat_small"]
+size = Vector2(60, 12)
 
 [node name="FruitBowl" type="Node2D"]
 
@@ -22,26 +28,50 @@ position = Vector2(0, 88)
 [node name="Col" type="CollisionShape2D" parent="Terrain/Ground"]
 shape = SubResource("ground_shape")
 
-[node name="PlatLeft" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
-position = Vector2(-125, 36)
+[node name="PlatLowLeft" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(-125, 52)
 
-[node name="Col" type="CollisionShape2D" parent="Terrain/PlatLeft"]
-shape = SubResource("plat_shape")
+[node name="Col" type="CollisionShape2D" parent="Terrain/PlatLowLeft"]
+shape = SubResource("plat_wide")
 
-[node name="PlatRight" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
-position = Vector2(98, 54)
+[node name="PlatLowRight" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(115, 60)
 
-[node name="Col" type="CollisionShape2D" parent="Terrain/PlatRight"]
-shape = SubResource("plat_shape")
+[node name="Col" type="CollisionShape2D" parent="Terrain/PlatLowRight"]
+shape = SubResource("plat_wide")
+
+[node name="PlatMid" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(-15, 18)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/PlatMid"]
+shape = SubResource("plat_mid")
+
+[node name="PlatMidRight" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(130, 8)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/PlatMidRight"]
+shape = SubResource("plat_small")
+
+[node name="PlatHighLeft" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(-110, -22)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/PlatHighLeft"]
+shape = SubResource("plat_mid")
+
+[node name="PlatTop" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(20, -58)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/PlatTop"]
+shape = SubResource("plat_mid")
 
 [node name="SpawnPoint1" type="Marker2D" parent="."]
-position = Vector2(-140, 50)
+position = Vector2(-135, 36)
 
 [node name="SpawnPoint2" type="Marker2D" parent="."]
-position = Vector2(140, 50)
+position = Vector2(120, 44)
 
 [node name="SpawnPoint3" type="Marker2D" parent="."]
-position = Vector2(-50, 20)
+position = Vector2(-22, 2)
 
 [node name="SpawnPoint4" type="Marker2D" parent="."]
-position = Vector2(60, 38)
+position = Vector2(135, -8)

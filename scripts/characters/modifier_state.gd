@@ -3,22 +3,28 @@ extends Node
 ## Tworzony programatycznie przez character.gd w _ready().
 ## ModifierSystem odczytuje i zapisuje pola przez proxy w character.gd.
 
+# ── Flagi ─────────────────────────────────────────────────────────────────────
 var wax_active:              bool  = false
 var second_fruit_used:       bool  = false
 var rot_explosion_triggered: bool  = false
 var streak_bonus_ready:      bool  = false
-var preservative_timer:      float = 0.0
-var regen_timer:             float = 2.0
-var armor_flat:              float = 0.0
-var seed_collector_bonus:    float = 0.0
-var streak_count:            int   = 0
 
+# ── Timery i liczniki ─────────────────────────────────────────────────────────
+var preservative_timer:   float = 0.0
+var regen_timer:          float = 2.0
+var armor_flat:           float = 0.0
+var seed_collector_bonus: float = 0.0
+var streak_count:         int   = 0
+
+# ── Slow ──────────────────────────────────────────────────────────────────────
 var is_slowed:  bool  = false
 var slow_timer: float = 0.0
 
+# ── Poison (incoming stacks) ──────────────────────────────────────────────────
 var poison_stack_timers: Array[float] = []
 var poison_tick_timer:   float        = 0.0
 
+# ── Poison trail (legacy mod) ─────────────────────────────────────────────────
 var poison_zone_scene: Resource = null
 var poison_spawn_timer: float   = 0.0
 

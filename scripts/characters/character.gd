@@ -111,6 +111,7 @@ func _ready() -> void:
 	# mody piszą przez proxy settery chronione przez if _modifier_state / if _rot_component.
 	# Antirot robi rot_time_remaining += 5.0, więc RotComponent musi być gotowy.
 
+	# ModifierState — przed RotComponent żeby preservative_timer był gotowy
 	_modifier_state = preload("res://scripts/characters/modifier_state.gd").new()
 	_modifier_state.name = "ModifierState"
 	add_child(_modifier_state)
@@ -121,6 +122,7 @@ func _ready() -> void:
 	add_child(_rot_component)
 	_rot_component.setup(character_name)
 
+	# CharacterVisuals — etykieta nazwy + animacja sprite'a
 	_visuals = preload("res://scripts/characters/character_visuals.gd").new()
 	_visuals.name = "CharacterVisuals"
 	add_child(_visuals)

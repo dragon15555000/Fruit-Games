@@ -39,13 +39,13 @@ func _draw_decorations() -> void:
 			Vector2(sx - 4, 80), Vector2(sx + 4, 80), Vector2(sx, 80 - sh)
 		]), Color(0.18, 0.52, 0.12, 0.70))
 
-	# ── Duże jaskiniowe platformy (miąższ) ───────────────────────────────────
-	_draw_flesh_platform(Rect2(-250, 100, 150, 20))
-	_draw_flesh_platform(Rect2( 100, 100, 150, 20))
-	_draw_flesh_platform(Rect2(-100,   0, 200, 20))
-	_draw_flesh_platform(Rect2(-350,-100, 120, 20))
-	_draw_flesh_platform(Rect2( 230,-100, 120, 20))
-	_draw_flesh_platform(Rect2(-150,-200, 300, 20))
+	# ── Jaskiniowe platformy (miąższ) — pokrywają się z fizyką ─────────────
+	_draw_flesh_platform(Rect2(-178, 48, 100, 14))
+	_draw_flesh_platform(Rect2(  78, 48, 100, 14))
+	_draw_flesh_platform(Rect2( -75,  1, 150, 14))
+	_draw_flesh_platform(Rect2(-162,-49,  85, 14))
+	_draw_flesh_platform(Rect2(  77,-49,  85, 14))
+	_draw_flesh_platform(Rect2( -55,-92, 110, 14))
 
 	# ── Sokowe jeziorka na podłodze ──────────────────────────────────────────
 	_draw_juice_pool(Vector2(-110, 82), 35)

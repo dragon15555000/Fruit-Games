@@ -34,6 +34,10 @@ var bot_controller_scn = preload("res://scripts/ai/bot_controller.gd")
 var melee_hit_scene    = preload("res://scenes/effects/melee_hit.tscn")
 var _ending_round: bool = false
 
+var juice_y:       float = 180.0
+var _juice_time:   float = 0.0
+var _juice_warned: bool  = false
+
 var map_scenes: Array = [
 	preload("res://scenes/maps/fruit_bowl.tscn"),
 	preload("res://scenes/maps/juice_factory.tscn"),
@@ -68,11 +72,42 @@ func _ready() -> void:
 
 	AudioManager.play_bgm()
 	$Gnicie.start()
-	
+
 	# HUD
 	var hud_scene = preload("res://scenes/ui/hud.tscn")
 	var hud_instance = hud_scene.instantiate()
 	add_child(hud_instance)
+
+
+func _draw() -> void:
+	if juice_y >= 180.0:
+		return
+	var t = Time.get_ticks_msec() * 0.002
+
+	# Tło soku
+	draw_rect(Rect2(-270, juice_y + 6.0, 540, 220), Color(0.80, 0.10, 0.16, 0.72))
+
+	# Falująca powierzchnia
+	var steps = 40
+	var w = 540.0 / steps
+	for i in range(steps):
+		var x0 = -270.0 + i * w
+		var x1 = x0 + w + 1.0
+		var y0 = juice_y + sin(t + i * 0.55) * 4.0
+		var y1 = juice_y + sin(t + (i + 1) * 0.55) * 4.0
+		draw_colored_polygon(
+			PackedVector2Array([
+				Vector2(x0, y0), Vector2(x1, y1),
+				Vector2(x1, juice_y + 12.0), Vector2(x0, juice_y + 12.0)
+			]),
+			Color(0.95, 0.25, 0.32, 0.92))
+
+	# Bąbelki na powierzchni
+	for i in range(10):
+		var bx = -220.0 + i * 48.0 + sin(t * 0.8 + i * 1.4) * 14.0
+		var by = juice_y + sin(t * 1.3 + i * 1.0) * 2.5 - 3.0
+		var br = 2.5 + sin(t * 0.6 + i * 0.7) * 1.0
+		draw_circle(Vector2(bx, by), br, Color(1.0, 0.55, 0.60, 0.65))
 
 
 func _spawn_player(character_name: String, spawn_pos: Vector2, player_prefix: String) -> void:
@@ -130,6 +165,7 @@ func _setup_kill_feed() -> void:
 func _on_shoot(pos: Vector2, dir: Vector2, player_prefix: String) -> void:
 	if _ending_round:
 		return
+	AudioManager.notify_combat()
 	var char_name = player_characters.get(player_prefix, "")
 
 	# Ananas = MELEE — cios obszarowy zamiast pocisku
@@ -193,6 +229,23 @@ func _physics_process(delta: float) -> void:
 	else:
 		if has_node("Camera2D"):
 			$Camera2D.offset = Vector2.ZERO
+
+	# ── Wznoszący się sok ─────────────────────────────────────────────────────
+	_juice_time += delta
+	juice_y -= (0.8 + _juice_time * 0.015) * delta
+	queue_redraw()
+
+	if not _juice_warned and juice_y < 105.0:
+		_juice_warned = true
+		Global.kill_feed_message.emit("🍹 Sok owocowy się wznosi!")
+
+	if not _ending_round and juice_y < 200.0:
+		for player in $Players.get_children():
+			var char_name = player_characters.get(player.name, "")
+			if char_name == "" or not Global.alive.get(char_name, false):
+				continue
+			if player.position.y + 8.0 > juice_y:
+				Global.take_damage(char_name, 40.0 * delta, "🍹 Sok owocowy")
 
 	if _ending_round:
 		return

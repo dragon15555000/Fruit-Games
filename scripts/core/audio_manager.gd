@@ -62,11 +62,13 @@ func _setup_bgm_players() -> void:
 
 
 func _process(delta: float) -> void:
+	# Interpolacja głośności obu ścieżek
 	if is_instance_valid(_ambient_player):
 		_ambient_player.volume_db = lerp(_ambient_player.volume_db, _target_ambient_db, delta * 2.5)
 	if is_instance_valid(_combat_player):
 		_combat_player.volume_db  = lerp(_combat_player.volume_db,  _target_combat_db,  delta * 2.5)
 
+	# Odliczanie powrotu do trybu ambient po ciszy
 	if _combat_timer > 0.0:
 		_combat_timer -= delta
 		if _combat_timer <= 0.0:
