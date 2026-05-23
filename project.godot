@@ -27,6 +27,10 @@ SettingsManager="*res://scripts/core/settings_manager.gd"
 
 window/stretch/mode="canvas_items"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/terminal/plugin.cfg")
+
 [global_group]
 
 Bullet=""
