@@ -33,6 +33,7 @@ var kill_feed_script   = preload("res://scripts/ui/kill_feed.gd")
 var bot_controller_scn = preload("res://scripts/ai/bot_controller.gd")
 var melee_hit_scene    = preload("res://scenes/effects/melee_hit.tscn")
 var _ending_round: bool = false
+var _pause_layer: CanvasLayer = null
 
 var juice_y:       float = 180.0
 var _juice_time:   float = 0.0
@@ -160,6 +161,78 @@ func _setup_kill_feed() -> void:
 	feed.offset_top   = 4
 	feed.offset_right = -4
 	canvas.add_child(feed)
+
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		if _ending_round:
+			return
+		if _pause_layer:
+			_resume_game()
+		else:
+			_pause_game()
+		get_viewport().set_input_as_handled()
+
+
+func _pause_game() -> void:
+	get_tree().paused = true
+	AudioManager.play_ui_click()
+
+	_pause_layer = CanvasLayer.new()
+	_pause_layer.layer = 30
+	_pause_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_pause_layer)
+
+	var bg = ColorRect.new()
+	bg.color = Color(0.0, 0.0, 0.0, 0.55)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.process_mode = Node.PROCESS_MODE_ALWAYS
+	_pause_layer.add_child(bg)
+
+	var vbox = VBoxContainer.new()
+	vbox.set_anchors_preset(Control.PRESET_CENTER)
+	vbox.set_offset(SIDE_LEFT,   -110)
+	vbox.set_offset(SIDE_TOP,     -80)
+	vbox.set_offset(SIDE_RIGHT,   110)
+	vbox.set_offset(SIDE_BOTTOM,   80)
+	vbox.add_theme_constant_override("separation", 16)
+	vbox.process_mode = Node.PROCESS_MODE_ALWAYS
+	_pause_layer.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "Pauza"
+	title.add_theme_font_size_override("font_size", 36)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	var resume_btn = Button.new()
+	resume_btn.text = "Wznów"
+	resume_btn.custom_minimum_size = Vector2(220, 44)
+	resume_btn.add_theme_font_size_override("font_size", 18)
+	resume_btn.pressed.connect(_resume_game)
+	vbox.add_child(resume_btn)
+
+	var quit_btn = Button.new()
+	quit_btn.text = "Wyjdź do menu"
+	quit_btn.custom_minimum_size = Vector2(220, 44)
+	quit_btn.add_theme_font_size_override("font_size", 18)
+	quit_btn.pressed.connect(_quit_to_menu)
+	vbox.add_child(quit_btn)
+
+
+func _resume_game() -> void:
+	AudioManager.play_ui_click()
+	if _pause_layer:
+		_pause_layer.queue_free()
+		_pause_layer = null
+	get_tree().paused = false
+
+
+func _quit_to_menu() -> void:
+	AudioManager.play_ui_click()
+	get_tree().paused = false
+	_pause_layer = null
+	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
 
 
 func _on_shoot(pos: Vector2, dir: Vector2, player_prefix: String) -> void:
