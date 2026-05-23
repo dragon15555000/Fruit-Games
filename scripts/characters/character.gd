@@ -11,8 +11,7 @@ extends CharacterBody2D
 @onready var health_bar:       ProgressBar = $HealthBar
 @onready var fruit_sprite:     Node2D      = $FruitSprite
 
-var _anim_time: float = 0.0
-var _recoil_time: float = 0.0
+var _visuals: Node = null
 
 signal shoot(pos: Vector2, dir: Vector2)
 
@@ -129,19 +128,15 @@ func _ready() -> void:
 	add_child(_rot_component)
 	_rot_component.setup(character_name)
 
+	# CharacterVisuals — etykieta nazwy + animacja sprite'a
+	_visuals = preload("res://scripts/characters/character_visuals.gd").new()
+	_visuals.name = "CharacterVisuals"
+	add_child(_visuals)
+	_visuals.setup(character_name, fruit_sprite)
+
 	Reloading.wait_time  = Global.characters[character_name]["fire_rate"]
 	health_bar.max_value = Global.base_characters[character_name]["hp"]
 	health_bar.value     = Global.characters[character_name]["hp"]
-
-	# Etykieta z nazwą nad postacią
-	var lbl = Label.new()
-	lbl.text = character_name
-	lbl.add_theme_font_size_override("font_size", 4)
-	lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.8))
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.position = Vector2(-12, -22)
-	lbl.size     = Vector2(24, 8)
-	add_child(lbl)
 
 	add_to_group("Players")  # wymagane przez ModifierSystem._find_character()
 
@@ -158,7 +153,7 @@ func get_input() -> void:
 		return
 	shoot.emit(position, get_local_mouse_position().normalized())
 	Reloading.start()
-	_recoil_time = 0.1
+	if _visuals: _visuals.trigger_recoil()
 
 
 # ─────────────────────────────────────────────
@@ -214,33 +209,11 @@ func die() -> void:
 
 
 # ─────────────────────────────────────────────
-# PROCESS (interpolacja zdalnych postaci)
+# PROCESS (interpolacja sieciowa — reszta w CharacterVisuals)
 # ─────────────────────────────────────────────
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if is_remote:
-		global_position = global_position.lerp(_net_target_pos, clampf(delta * NET_LERP_SPEED, 0.0, 1.0))
-	
-	if _is_dying: return
-	_anim_time += delta
-	if _recoil_time > 0:
-		_recoil_time -= delta
-	
-	if is_instance_valid(fruit_sprite):
-		fruit_sprite.scale = Vector2.ONE
-		fruit_sprite.rotation = 0.0
-		if not is_on_floor():
-			var stretch = clamp(abs(velocity.y) / 500.0, 0.0, 0.3)
-			fruit_sprite.scale = Vector2(1.0 - stretch*0.5, 1.0 + stretch)
-		else:
-			if abs(velocity.x) > 5.0:
-				fruit_sprite.rotation = sin(_anim_time * 20.0) * 0.15
-				if velocity.x < 0: fruit_sprite.scale.x = -1
-			else:
-				fruit_sprite.scale.y = 1.0 + sin(_anim_time * 5.0) * 0.03
-				fruit_sprite.scale.x = 1.0 - sin(_anim_time * 5.0) * 0.02
-		
-		if _recoil_time > 0:
-			fruit_sprite.scale *= (1.0 + _recoil_time * 2.0)
+		global_position = global_position.lerp(_net_target_pos, clampf(_delta * NET_LERP_SPEED, 0.0, 1.0))
 
 
 # ─────────────────────────────────────────────
