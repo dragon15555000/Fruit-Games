@@ -85,7 +85,7 @@ func play_sound(sound_name: String, pitch_scale: float = 1.0, volume_db: float =
 	if not _sounds.has(sound_name):
 		push_warning("AudioManager: nieznany dźwięk '%s'" % sound_name)
 		return
-	var player := AudioStreamPlayer.new()
+	var player: AudioStreamPlayer = AudioStreamPlayer.new()
 	player.stream = _sounds[sound_name]
 	# Losowa zmiana tonacji dla powtarzalnych dźwięków — eliminuje efekt monotonii
 	if pitch_scale == 1.0 and sound_name in _PITCH_RANDOMIZED:

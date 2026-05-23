@@ -19,7 +19,7 @@ func trigger_recoil() -> void:
 
 
 func _create_name_label(char_name: String) -> void:
-	var lbl := Label.new()
+	var lbl: Label = Label.new()
 	lbl.text = char_name
 	lbl.add_theme_font_size_override("font_size", 4)
 	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.8))
