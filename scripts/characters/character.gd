@@ -11,9 +11,7 @@ extends CharacterBody2D
 @onready var health_bar:       ProgressBar = $HealthBar
 @onready var fruit_sprite:     Node2D      = $FruitSprite
 
-var rot_bar: ProgressBar
-var _anim_time: float = 0.0
-var _recoil_time: float = 0.0
+var _visuals: Node = null
 
 signal shoot(pos: Vector2, dir: Vector2)
 
@@ -23,21 +21,15 @@ var action_right: String = ""
 var action_jump:  String = ""
 var action_shoot: String = ""
 
-# Sieć — ID peera właściciela tej postaci (0 = tryb lokalny)
-var network_owner_id: int   = 0
-var _net_sync_timer:  float = 0.0
+# Sieć — delegowane do NetSync (tworzony w _ready)
+var _net_sync: Node = null
 
-# Interpolacja sieciowa — wygładza ruch zdalnych postaci
-var _net_target_pos: Vector2    = Vector2.ZERO
-const NET_LERP_SPEED: float     = 20.0
-var _is_remote: bool = false
+var network_owner_id: int:
+	get: return _net_sync.owner_id if _net_sync else 0
+	set(v): if _net_sync: _net_sync.owner_id = v
 var is_remote: bool:
-	get:
-		return _is_remote
-	set(value):
-		_is_remote = value
-		if value:
-			_net_target_pos = global_position
+	get: return _net_sync.is_remote if _net_sync else false
+	set(v): if _net_sync: _net_sync.is_remote = v
 
 var max_speed:  float = 0.0
 var base_speed: float = 0.0
@@ -48,46 +40,61 @@ var base_speed: float = 0.0
 # die() wywołuje się wielokrotnie → death_order ma duplikaty → crash w ranking.
 var _is_dying: bool = false
 
-# ── Stan modów (flagi odczytywane przez ModifierSystem) ──────────────────────
-var wax_active:              bool  = false   # wax_coat
-var second_fruit_used:       bool  = false   # second_fruit
-var preservative_timer:      float = 0.0     # preservative — odlicza w dół
-var regen_timer:             float = 2.0     # still_green
-var rot_explosion_triggered: bool  = false   # rot_explosion
-var armor_flat:              float = 0.0     # stone_seed
-var seed_collector_bonus:    float = 0.0     # seed_collector
-var streak_count:            int   = 0       # fruit_streak
-var streak_bonus_ready:      bool  = false   # fruit_streak
+# ── Stan modów — delegowany do ModifierState (tworzony w _ready) ─────────────
+var _modifier_state: Node = null
 
-# ── Slow (mod: sticky / inne) ─────────────────────────────────────────────────
-var is_slowed:  bool  = false
-var slow_timer: float = 0.0
+# Proxy do pól ModifierState — ModifierSystem i inne zewnętrzne skrypty
+# korzystają z tych właściwości bez wiedzy o wewnętrznej strukturze.
+var wax_active: bool:
+	get: return _modifier_state.wax_active if _modifier_state else false
+	set(v): if _modifier_state: _modifier_state.wax_active = v
+var second_fruit_used: bool:
+	get: return _modifier_state.second_fruit_used if _modifier_state else false
+	set(v): if _modifier_state: _modifier_state.second_fruit_used = v
+var rot_explosion_triggered: bool:
+	get: return _modifier_state.rot_explosion_triggered if _modifier_state else false
+	set(v): if _modifier_state: _modifier_state.rot_explosion_triggered = v
+var streak_bonus_ready: bool:
+	get: return _modifier_state.streak_bonus_ready if _modifier_state else false
+	set(v): if _modifier_state: _modifier_state.streak_bonus_ready = v
+var preservative_timer: float:
+	get: return _modifier_state.preservative_timer if _modifier_state else 0.0
+	set(v): if _modifier_state: _modifier_state.preservative_timer = v
+var regen_timer: float:
+	get: return _modifier_state.regen_timer if _modifier_state else 2.0
+	set(v): if _modifier_state: _modifier_state.regen_timer = v
+var armor_flat: float:
+	get: return _modifier_state.armor_flat if _modifier_state else 0.0
+	set(v): if _modifier_state: _modifier_state.armor_flat = v
+var seed_collector_bonus: float:
+	get: return _modifier_state.seed_collector_bonus if _modifier_state else 0.0
+	set(v): if _modifier_state: _modifier_state.seed_collector_bonus = v
+var streak_count: int:
+	get: return _modifier_state.streak_count if _modifier_state else 0
+	set(v): if _modifier_state: _modifier_state.streak_count = v
+var is_slowed: bool:
+	get: return _modifier_state.is_slowed if _modifier_state else false
+var poison_zone_scene: Resource:
+	get: return _modifier_state.poison_zone_scene if _modifier_state else null
+var poison_spawn_timer: float:
+	get: return _modifier_state.poison_spawn_timer if _modifier_state else 0.0
+	set(v): if _modifier_state: _modifier_state.poison_spawn_timer = v
 
-# ── Poison incoming (stacks z decay) ─────────────────────────────────────────
-# Każdy element to pozostały czas życia stacka (sekundy).
-# apply_poison() dodaje nowy stack (3s), _physics_process odlicza i usuwa wygasłe.
-var poison_stack_timers: Array[float] = []
-var poison_tick_timer:   float        = 0.0
+# ── Gnicie — delegowane do RotComponent (tworzony w _ready) ──────────────────
+var _rot_component: Node = null
 
-# ── Poison trail (stary mod: poison) ─────────────────────────────────────────
-var poison_zone_scene   = preload("res://scenes/effects/poison_zone.tscn")
-var poison_spawn_timer: float = 0.0
-
-# ── Per-gracz gnicie (rot) ─────────────────────────────────────────────────
-# Bazowy czas gnicia = 120s. Mody zmieniają rot_time_remaining:
-#   rot_shot   — trafiony traci 3s z rot_time
-#   antirot    — +5s na starcie rundy
-#   rot_accelerator — obsługiwany w apply_passive (skraca wrogom w zasięgu)
-const BASE_ROT_TIME: float = 120.0
-var rot_time_remaining: float = BASE_ROT_TIME
+var rot_time_remaining: float:
+	get: return _rot_component.rot_time_remaining if _rot_component else 0.0
+	set(v):
+		if _rot_component: _rot_component.rot_time_remaining = v
 
 # ── Fizyka ────────────────────────────────────────────────────────────────────
 var coyote_time_activated: bool  = false
-const JUMP_HEIGHT:  float = -230.0
-var   gravity:      float = 12.0
-const MAX_GRAVITY:  float = 14.5
-const ACCELERATION: float = 8.0
-const FRICTION:     float = 10.0
+const JUMP_HEIGHT:  float = -270.0
+var   gravity:      float = 15.0
+const MAX_GRAVITY:  float = 20.0
+const ACCELERATION: float = 16.0
+const FRICTION:     float = 18.0
 
 
 # ─────────────────────────────────────────────
@@ -103,34 +110,33 @@ func _ready() -> void:
 	# Aplikuj mody startowe (on_apply) — prędkość, HP, flagi
 	ModifierSystem.apply_on_ready(character_name, self)
 
-	# Per-gracz gnicie — po apply_on_ready żeby antirot mogł dodać +5s
-	rot_time_remaining = BASE_ROT_TIME + Global.rot_bonus.get(character_name, 0.0)
+	# ModifierState — przed RotComponent żeby preservative_timer był gotowy
+	_modifier_state = preload("res://scripts/characters/modifier_state.gd").new()
+	_modifier_state.name = "ModifierState"
+	add_child(_modifier_state)
+	_modifier_state.setup(character_name)
+
+	# RotComponent — po apply_on_ready żeby antirot zdążył zapisać bonus
+	_rot_component = preload("res://scripts/characters/rot_component.gd").new()
+	_rot_component.name = "RotComponent"
+	add_child(_rot_component)
+	_rot_component.setup(character_name)
+
+	# CharacterVisuals — etykieta nazwy + animacja sprite'a
+	_visuals = preload("res://scripts/characters/character_visuals.gd").new()
+	_visuals.name = "CharacterVisuals"
+	add_child(_visuals)
+	_visuals.setup(character_name, fruit_sprite)
+
+	# NetSync — synchronizacja sieciowa pozycji/prędkości
+	_net_sync = preload("res://scripts/characters/net_sync.gd").new()
+	_net_sync.name = "NetSync"
+	add_child(_net_sync)
+	_net_sync.setup(0)  # owner_id ustawia main_game.gd po spawnie
 
 	Reloading.wait_time  = Global.characters[character_name]["fire_rate"]
 	health_bar.max_value = Global.base_characters[character_name]["hp"]
 	health_bar.value     = Global.characters[character_name]["hp"]
-
-	# Wizualny timer gnicia
-	rot_bar = ProgressBar.new()
-	rot_bar.max_value = BASE_ROT_TIME
-	rot_bar.value = rot_time_remaining
-	rot_bar.show_percentage = false
-	rot_bar.size = Vector2(16, 2)
-	rot_bar.position = Vector2(-8, -17)
-	var sb = StyleBoxFlat.new()
-	sb.bg_color = Color(0.2, 0.8, 0.2)
-	rot_bar.add_theme_stylebox_override("fill", sb)
-	add_child(rot_bar)
-
-	# Etykieta z nazwą nad postacią
-	var lbl = Label.new()
-	lbl.text = character_name
-	lbl.add_theme_font_size_override("font_size", 4)
-	lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.8))
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.position = Vector2(-12, -22)
-	lbl.size     = Vector2(24, 8)
-	add_child(lbl)
 
 	add_to_group("Players")  # wymagane przez ModifierSystem._find_character()
 
@@ -147,23 +153,15 @@ func get_input() -> void:
 		return
 	shoot.emit(position, get_local_mouse_position().normalized())
 	Reloading.start()
-	_recoil_time = 0.1
+	if _visuals: _visuals.trigger_recoil()
 
 
 # ─────────────────────────────────────────────
 # PUBLICZNE API
 # ─────────────────────────────────────────────
 
-func apply_slow() -> void:
-	if preservative_timer > 0.0:
-		return
-	is_slowed  = true
-	slow_timer = 3.0
-
-func apply_poison() -> void:
-	if preservative_timer > 0.0:
-		return
-	poison_stack_timers.append(3.0)  # nowy stack trwa 3 sekundy
+func apply_slow()   -> void: if _modifier_state: _modifier_state.apply_slow()
+func apply_poison() -> void: if _modifier_state: _modifier_state.apply_poison()
 
 ## Główna brama obrażeń — wywoływana z bullet.gd.
 ## Zwraca faktyczne obrażenia po modyfikacjach (0.0 = zablokowane).
@@ -187,18 +185,12 @@ func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
 
 	return dmg
 
-## Odbiera pakiet pozycji/prędkości od właściciela zdalnej postaci.
-func receive_remote_state(pos: Vector2, vel: Vector2) -> void:
-	_net_target_pos = pos
-	velocity        = vel
-
 ## Śmierć — wywołaj tylko przez tę funkcję, nigdy queue_free() bezpośrednio.
 func die() -> void:
 	if _is_dying:
-
 		return
 	_is_dying = true
-	
+
 	AudioManager.play_sound("death")
 	if Global.main_game:
 		Global.main_game.add_shake(15.0)
@@ -208,36 +200,6 @@ func die() -> void:
 	Global.death_order.append(character_name)
 
 	queue_free()
-
-
-# ─────────────────────────────────────────────
-# PROCESS (interpolacja zdalnych postaci)
-# ─────────────────────────────────────────────
-func _process(delta: float) -> void:
-	if is_remote:
-		global_position = global_position.lerp(_net_target_pos, clampf(delta * NET_LERP_SPEED, 0.0, 1.0))
-	
-	if _is_dying: return
-	_anim_time += delta
-	if _recoil_time > 0:
-		_recoil_time -= delta
-	
-	if is_instance_valid(fruit_sprite):
-		fruit_sprite.scale = Vector2.ONE
-		fruit_sprite.rotation = 0.0
-		if not is_on_floor():
-			var stretch = clamp(abs(velocity.y) / 500.0, 0.0, 0.3)
-			fruit_sprite.scale = Vector2(1.0 - stretch*0.5, 1.0 + stretch)
-		else:
-			if abs(velocity.x) > 5.0:
-				fruit_sprite.rotation = sin(_anim_time * 20.0) * 0.15
-				if velocity.x < 0: fruit_sprite.scale.x = -1
-			else:
-				fruit_sprite.scale.y = 1.0 + sin(_anim_time * 5.0) * 0.03
-				fruit_sprite.scale.x = 1.0 - sin(_anim_time * 5.0) * 0.02
-		
-		if _recoil_time > 0:
-			fruit_sprite.scale *= (1.0 + _recoil_time * 2.0)
 
 
 # ─────────────────────────────────────────────
@@ -259,38 +221,6 @@ func _physics_process(delta: float) -> void:
 		return
 
 	health_bar.value = Global.characters[character_name]["hp"]
-
-	# Konserwant — odliczaj timer
-	if preservative_timer > 0.0:
-		preservative_timer -= delta
-
-	# Slow
-	if is_slowed:
-		slow_timer -= delta
-		if slow_timer <= 0.0:
-			is_slowed = false
-
-	# Poison (incoming stacks z decay) — 5 DMG × aktywne stacki co sekundę
-	if poison_stack_timers.size() > 0:
-		# Odliczaj czas życia każdego stacka
-		for i in range(poison_stack_timers.size() - 1, -1, -1):
-			poison_stack_timers[i] -= delta
-			if poison_stack_timers[i] <= 0.0:
-				poison_stack_timers.remove_at(i)
-		# Tick obrażeń co 1s
-		poison_tick_timer -= delta
-		if poison_tick_timer <= 0.0:
-			poison_tick_timer = 1.0
-			var stacks = poison_stack_timers.size()
-			if stacks > 0:
-				Global.take_damage(character_name, 5.0 * stacks, "🧪 Trucizna")
-				Global.spawn_particles(global_position, Color(0.5, 0.0, 0.8), 10)
-
-	# Per-gracz gnicie — gdy czas się skończy, gracz umiera
-	rot_time_remaining -= delta
-	if rot_bar: rot_bar.value = rot_time_remaining
-	if rot_time_remaining <= 0.0:
-		Global.take_damage(character_name, 9999.0, "🦠 Zgnilizna")
 
 	# Mody pasywne
 	ModifierSystem.apply_passive(character_name, delta, self)
@@ -348,18 +278,3 @@ func _physics_process(delta: float) -> void:
 
 	velocity.y += gravity
 	move_and_slide()
-
-	# W trybie sieciowym właściciel synchronizuje pozycję do pozostałych (~30 Hz)
-	if Global.is_network_game and network_owner_id != 0:
-		_net_sync_timer += delta
-		if _net_sync_timer >= 0.033:
-			_net_sync_timer = 0.0
-			_rpc_sync_pos.rpc(position, velocity)
-
-
-# ─────────────────────────────────────────────
-# NETWORK POSITION SYNC
-# ─────────────────────────────────────────────
-@rpc("any_peer", "call_remote", "unreliable")
-func _rpc_sync_pos(pos: Vector2, vel: Vector2) -> void:
-	receive_remote_state(pos, vel)
