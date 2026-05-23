@@ -2,17 +2,15 @@ extends Node
 
 # ── Ścieżki dźwiękowe ─────────────────────────────────────────────────────────
 const _SOUND_PATHS: Dictionary = {
-	"shoot":    "res://assets/audio/shoot.wav",
-	"hit":      "res://assets/audio/hit.wav",
-	"jump":     "res://assets/audio/jump.wav",
-	"death":    "res://assets/audio/death.wav",
-	"ui_click": "res://assets/audio/ui_click.wav",
-	"melee":    "res://assets/audio/melee.wav",
-	"bgm":      "res://assets/audio/bgm.wav",
+	"shoot":      "res://assets/audio/shoot.wav",
+	"hit":        "res://assets/audio/hit.wav",
+	"jump":       "res://assets/audio/jump.wav",
+	"death":      "res://assets/audio/death.wav",
+	"ui_click":   "res://assets/audio/ui_click.wav",
+	"melee":      "res://assets/audio/melee.wav",
+	"bgm":        "res://assets/audio/bgm.wav",
+	"bgm_combat": "res://assets/audio/bgm_combat.wav",
 }
-
-# bgm_combat jest opcjonalne — gdy brak pliku, combat player używa bgm jako fallback
-const _BGM_COMBAT_PATH: String = "res://assets/audio/bgm_combat.wav"
 
 # Dźwięki z losową zmianą tonacji — każde trafienie i skok brzmi unikalnie
 const _PITCH_RANDOMIZED: Array = ["hit", "jump", "shoot"]
@@ -57,10 +55,8 @@ func _setup_bgm_players() -> void:
 
 	_combat_player = AudioStreamPlayer.new()
 	_combat_player.bus = "Master"
-	if ResourceLoader.exists(_BGM_COMBAT_PATH):
-		_combat_player.stream = load(_BGM_COMBAT_PATH)
-	elif _sounds.has("bgm"):
-		_combat_player.stream = _sounds["bgm"]
+	if _sounds.has("bgm_combat"):
+		_combat_player.stream = _sounds["bgm_combat"]
 	_combat_player.volume_db = _target_combat_db
 	add_child(_combat_player)
 
