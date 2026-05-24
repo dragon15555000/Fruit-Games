@@ -1,0 +1,36 @@
+[gd_scene load_steps=4 format=3 uid="uid://bananabull"]
+
+[ext_resource type="Script" path="res://scripts/bullets/bullet.gd" id="1_cx22g"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_banana"]
+radius = 2.5
+
+[sub_resource type="GDScript" id="GDScript_banana"]
+script/source = "extends Node2D
+var rot_angle: float = 0.0
+func _process(delta: float):
+	rot_angle += delta * 10.0
+	queue_redraw()
+func _draw():
+	draw_set_transform(Vector2.ZERO, rot_angle)
+	var pts = PackedVector2Array([
+		Vector2(-3.5, -1.5), Vector2(3.5, -1.5),
+		Vector2(4.0, 0.0), Vector2(3.5, 1.5),
+		Vector2(-3.5, 1.5), Vector2(-4.0, 0.0)
+	])
+	draw_colored_polygon(pts, Color(0.98, 0.90, 0.15))
+	draw_line(Vector2(-3.5, -1.5), Vector2(-4.5, -2.5), Color(0.55, 0.40, 0.10), 1.0)
+	draw_circle(Vector2(-1.0, 0.0), 1.2, Color(0.85, 0.78, 0.12))
+	draw_set_transform(Vector2.ZERO, 0)
+"
+
+[node name="banana_bullet" type="Area2D" groups=["Bullet"]]
+script = ExtResource("1_cx22g")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_banana")
+
+[node name="BulletSprite" type="Node2D" parent="."]
+script = SubResource("GDScript_banana")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

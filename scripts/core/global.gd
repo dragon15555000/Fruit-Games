@@ -46,6 +46,9 @@ const ORIGINAL_BASE_CHARACTERS: Dictionary = {
 	"Grape":      { "hp": 110, "speed": 110, "dmg": 10, "range": 180, "fire_rate": 0.18 },
 	"Lemon":      { "hp": 80,  "speed": 90,  "dmg": 15, "range": 300, "fire_rate": 0.8  },
 	"Watermelon": { "hp": 220, "speed": 45,  "dmg": 55, "range": 90,  "fire_rate": 1.5  },
+	"Banana":     { "hp": 100, "speed": 80,  "dmg": 22, "range": 250, "fire_rate": 0.6  },
+	"Cherry":     { "hp": 70,  "speed": 105, "dmg": 20, "range": 200, "fire_rate": 0.5  },
+	"Coconut":    { "hp": 160, "speed": 70,  "dmg": 30, "range": 150, "fire_rate": 1.0  },
 }
 
 # Kopia robocza — może być modyfikowana przez mody (thick_skin, seed_collector itp.)
@@ -201,6 +204,10 @@ func reset_all() -> void:
 			modifiers[ch].append("fermentation")
 		if ch == "Watermelon" and not "armor" in modifiers[ch]:
 			modifiers[ch].append("armor")
+		if ch == "Banana" and not "ripe_sprint" in modifiers[ch]:
+			modifiers[ch].append("ripe_sprint")
+		if ch == "Coconut" and not "hard_fruit" in modifiers[ch]:
+			modifiers[ch].append("hard_fruit")
 			
 	round_over   = false
 	game_started = false
@@ -287,6 +294,21 @@ func rpc_reset_all() -> void:
 # _physics_process USUNIĘTY CAŁKOWICIE
 # Koniec rundy wykrywa wyłącznie main_game.gd
 
+const CHARACTER_COLORS: Dictionary = {
+	"Strawberry": Color(0.90, 0.10, 0.15),
+	"Orange":     Color(1.00, 0.55, 0.10),
+	"Pineapple":  Color(0.85, 0.70, 0.15),
+	"Grape":      Color(0.55, 0.10, 0.70),
+	"Lemon":      Color(0.98, 0.95, 0.15),
+	"Watermelon": Color(0.90, 0.20, 0.30),
+	"Banana":     Color(0.98, 0.92, 0.15),
+	"Cherry":     Color(0.85, 0.05, 0.12),
+	"Coconut":    Color(0.50, 0.33, 0.15),
+}
+
+func get_char_color(char_name: String) -> Color:
+	return CHARACTER_COLORS.get(char_name, Color(1, 0.8, 0.2))
+
 func spawn_particles(pos: Vector2, color: Color, amount: int = 15) -> void:
 	if main_game == null or not is_instance_valid(main_game): return
 	var cp = CPUParticles2D.new()
@@ -295,13 +317,56 @@ func spawn_particles(pos: Vector2, color: Color, amount: int = 15) -> void:
 	cp.one_shot = true
 	cp.explosiveness = 0.9
 	cp.amount = amount
-	cp.lifetime = 0.5
+	cp.lifetime = 0.6
 	cp.spread = 180.0
-	cp.gravity = Vector2(0, 300)
-	cp.initial_velocity_min = 100
-	cp.initial_velocity_max = 200
-	cp.scale_amount_min = 3.0
-	cp.scale_amount_max = 6.0
+	cp.gravity = Vector2(0, 280)
+	cp.initial_velocity_min = 80
+	cp.initial_velocity_max = 220
+	cp.scale_amount_min = 3.5
+	cp.scale_amount_max = 7.0
 	cp.color = color
 	main_game.add_child(cp)
-	get_tree().create_timer(1.0).timeout.connect(cp.queue_free)
+	get_tree().create_timer(1.2).timeout.connect(cp.queue_free)
+
+func spawn_hit_particles(pos: Vector2, char_name: String) -> void:
+	if main_game == null or not is_instance_valid(main_game): return
+	var col = get_char_color(char_name)
+	# Mała iskra trafienia
+	var cp = CPUParticles2D.new()
+	cp.position = pos
+	cp.emitting = true
+	cp.one_shot = true
+	cp.explosiveness = 1.0
+	cp.amount = 8
+	cp.lifetime = 0.35
+	cp.spread = 60.0
+	cp.gravity = Vector2(0, 200)
+	cp.initial_velocity_min = 60
+	cp.initial_velocity_max = 140
+	cp.scale_amount_min = 2.0
+	cp.scale_amount_max = 4.0
+	cp.color = col
+	main_game.add_child(cp)
+	get_tree().create_timer(0.8).timeout.connect(cp.queue_free)
+
+func spawn_death_particles(pos: Vector2, char_name: String) -> void:
+	if main_game == null or not is_instance_valid(main_game): return
+	var col = get_char_color(char_name)
+	# Duża eksplozja przy śmierci
+	for i in range(3):
+		var cp = CPUParticles2D.new()
+		cp.position = pos
+		cp.emitting = true
+		cp.one_shot = true
+		cp.explosiveness = 0.95
+		cp.amount = 12 + i * 6
+		cp.lifetime = 0.5 + i * 0.2
+		cp.spread = 180.0
+		cp.gravity = Vector2(0, 250 - i * 50)
+		cp.initial_velocity_min = 80 + i * 40
+		cp.initial_velocity_max = 180 + i * 60
+		cp.scale_amount_min = 4.0 - i * 0.5
+		cp.scale_amount_max = 8.0 - i * 0.5
+		cp.color = col if i == 0 else Color(col.r * 0.7, col.g * 0.7, col.b * 0.7, 0.8)
+		main_game.add_child(cp)
+		get_tree().create_timer(1.5).timeout.connect(cp.queue_free)

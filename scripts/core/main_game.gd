@@ -24,6 +24,18 @@ var character_scenes = {
 	"Watermelon": {
 		"scene":  preload("res://scenes/characters/watermelon.tscn"),
 		"bullet": preload("res://scenes/bullets/watermelon_bullet.tscn")
+	},
+	"Banana": {
+		"scene":  preload("res://scenes/characters/banana.tscn"),
+		"bullet": preload("res://scenes/bullets/banana_bullet.tscn")
+	},
+	"Cherry": {
+		"scene":  preload("res://scenes/characters/cherry.tscn"),
+		"bullet": preload("res://scenes/bullets/cherry_bullet.tscn")
+	},
+	"Coconut": {
+		"scene":  preload("res://scenes/characters/coconut.tscn"),
+		"bullet": preload("res://scenes/bullets/coconut_bullet.tscn")
 	}
 }
 
@@ -45,6 +57,8 @@ var map_scenes: Array = [
 	preload("res://scenes/maps/canopy.tscn"),
 	preload("res://scenes/maps/blender.tscn"),
 	preload("res://scenes/maps/watermelon_caves.tscn"),
+	preload("res://scenes/maps/cherry_orchard.tscn"),
+	preload("res://scenes/maps/banana_jungle.tscn"),
 ]
 var current_map: Node2D = null
 

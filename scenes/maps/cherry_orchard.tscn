@@ -1,0 +1,74 @@
+[gd_scene load_steps=7 format=3 uid="uid://map_cherry_orchard"]
+
+[ext_resource type="Script" path="res://scripts/map/map_cherry_orchard.gd" id="1_bg"]
+
+[sub_resource type="RectangleShape2D" id="ground_shape"]
+size = Vector2(384, 40)
+
+[sub_resource type="RectangleShape2D" id="plat_wide"]
+size = Vector2(80, 12)
+
+[sub_resource type="RectangleShape2D" id="plat_mid"]
+size = Vector2(70, 12)
+
+[sub_resource type="RectangleShape2D" id="plat_small"]
+size = Vector2(65, 12)
+
+[sub_resource type="RectangleShape2D" id="plat_top"]
+size = Vector2(65, 12)
+
+[node name="CherryOrchard" type="Node2D"]
+
+[node name="BG" type="Node2D" parent="."]
+z_index = -10
+script = ExtResource("1_bg")
+
+[node name="Terrain" type="Node2D" parent="."]
+
+[node name="Ground" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(0, 88)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/Ground"]
+shape = SubResource("ground_shape")
+
+[node name="PlatLowLeft" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(-120, 52)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/PlatLowLeft"]
+shape = SubResource("plat_wide")
+
+[node name="PlatLowRight" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(115, 68)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/PlatLowRight"]
+shape = SubResource("plat_wide")
+
+[node name="PlatMid" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(-5, 34)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/PlatMid"]
+shape = SubResource("plat_mid")
+
+[node name="PlatHighLeft" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(-88, -6)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/PlatHighLeft"]
+shape = SubResource("plat_small")
+
+[node name="PlatTop" type="StaticBody2D" parent="Terrain" groups=["Terrain"]]
+position = Vector2(55, -34)
+
+[node name="Col" type="CollisionShape2D" parent="Terrain/PlatTop"]
+shape = SubResource("plat_top")
+
+[node name="SpawnPoint1" type="Marker2D" parent="."]
+position = Vector2(-120, 36)
+
+[node name="SpawnPoint2" type="Marker2D" parent="."]
+position = Vector2(118, 52)
+
+[node name="SpawnPoint3" type="Marker2D" parent="."]
+position = Vector2(-5, 18)
+
+[node name="SpawnPoint4" type="Marker2D" parent="."]
+position = Vector2(55, -50)

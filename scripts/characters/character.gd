@@ -90,6 +90,7 @@ var rot_time_remaining: float:
 
 # ── Fizyka ────────────────────────────────────────────────────────────────────
 var coyote_time_activated: bool  = false
+var _double_jump_used: bool      = false
 const JUMP_HEIGHT:  float = -270.0
 var   gravity:      float = 15.0
 const MAX_GRAVITY:  float = 20.0
@@ -177,7 +178,7 @@ func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
 		return 0.0
 
 	AudioManager.play_sound("hit")
-	Global.spawn_particles(global_position, Color(1, 0, 0), 5)
+	Global.spawn_hit_particles(global_position, character_name)
 
 	# Sprawdź czy cios byłby śmiertelny
 	var cur_hp = float(Global.characters[character_name]["hp"])
@@ -196,7 +197,7 @@ func die() -> void:
 	AudioManager.play_sound("death")
 	if Global.main_game:
 		Global.main_game.add_shake(15.0)
-	Global.spawn_particles(global_position, Color(0.5, 0, 0), 20)
+	Global.spawn_death_particles(global_position, character_name)
 
 	Global.alive[character_name] = false
 	Global.death_order.append(character_name)
@@ -239,6 +240,7 @@ func _physics_process(delta: float) -> void:
 	# Grawitacja i coyote time
 	if is_on_floor():
 		coyote_time_activated = false
+		_double_jump_used = false
 		gravity = lerp(gravity, 12.0, 12.0 * delta)
 	else:
 		if CoyoteTimer.is_stopped() and not coyote_time_activated:
@@ -257,6 +259,13 @@ func _physics_process(delta: float) -> void:
 		JumpBufferTimer.stop()
 		CoyoteTimer.stop()
 		coyote_time_activated = true
+		AudioManager.play_sound("jump")
+
+	# Double jump — tylko Cherry, jeden raz w powietrzu
+	if character_name == "Cherry" and not is_on_floor() and not _double_jump_used \
+	   and action_jump != "" and Input.is_action_just_pressed(action_jump):
+		velocity.y = JUMP_HEIGHT
+		_double_jump_used = true
 		AudioManager.play_sound("jump")
 
 	# Head nudge — pozwala wejść pod niskie platformy

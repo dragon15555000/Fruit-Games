@@ -18,6 +18,12 @@ func _draw():
 			_draw_lemon()
 		"Watermelon":
 			_draw_watermelon()
+		"Banana":
+			_draw_banana()
+		"Cherry":
+			_draw_cherry()
+		"Coconut":
+			_draw_coconut()
 
 func _draw_strawberry():
 	var body_color = Color(0.9, 0.1, 0.15)
@@ -163,6 +169,81 @@ func _draw_watermelon():
 		draw_circle(sp, 1.2, seed_color)
 
 	_draw_eyes(Vector2(-3, -2), Vector2(3, -2))
+
+func _draw_banana():
+	var body_color = Color(0.98, 0.92, 0.15)
+	var tip_color  = Color(0.55, 0.40, 0.10)
+	var shadow     = Color(0.85, 0.75, 0.10)
+
+	var pts: PackedVector2Array = []
+	for i in range(24):
+		var a = i * TAU / 24
+		var rx = 5.5 + cos(a * 2.0) * 1.5
+		pts.append(Vector2(cos(a) * rx, sin(a) * 8.0 + cos(a) * 2.0))
+	draw_colored_polygon(pts, body_color)
+
+	# Żebra bananu
+	for i in range(-6, 7, 3):
+		draw_line(Vector2(i, -7), Vector2(i + 1, 7), shadow, 0.6)
+
+	# Końcówki
+	draw_colored_polygon(PackedVector2Array([
+		Vector2(-5, -6), Vector2(-9, -4), Vector2(-7, -2)
+	]), tip_color)
+	draw_colored_polygon(PackedVector2Array([
+		Vector2(5, 6), Vector2(9, 4), Vector2(7, 2)
+	]), tip_color)
+
+	_draw_eyes(Vector2(-2, -1), Vector2(2, -1))
+
+func _draw_cherry():
+	var body_color = Color(0.85, 0.08, 0.15)
+	var shine      = Color(1.0, 0.45, 0.50, 0.65)
+	var stem_color = Color(0.25, 0.60, 0.15)
+
+	# Dwie wiśnie obok siebie
+	draw_circle(Vector2(-4, 2), 7.0, body_color)
+	draw_circle(Vector2(4, 2), 7.0, body_color)
+
+	# Blaski
+	draw_circle(Vector2(-5, -1), 2.5, shine)
+	draw_circle(Vector2(3, -1), 2.5, shine)
+
+	# Szypułki
+	draw_line(Vector2(-4, -5), Vector2(-2, -12), stem_color, 1.5)
+	draw_line(Vector2(4, -5), Vector2(2, -12), stem_color, 1.5)
+	draw_line(Vector2(-2, -12), Vector2(2, -12), stem_color, 1.5)
+	draw_line(Vector2(0, -12), Vector2(0, -15), stem_color, 1.5)
+
+	_draw_eyes(Vector2(-5, 2), Vector2(3, 2))
+
+func _draw_coconut():
+	var shell_dark  = Color(0.35, 0.22, 0.10)
+	var shell_mid   = Color(0.50, 0.33, 0.15)
+	var shell_light = Color(0.65, 0.48, 0.25)
+	var fiber_color = Color(0.60, 0.45, 0.22, 0.6)
+	var white_color = Color(0.95, 0.90, 0.80)
+
+	# Główna kula
+	draw_circle(Vector2(0, 0), 10.0, shell_dark)
+	draw_circle(Vector2(0, 0), 9.0, shell_mid)
+
+	# Podłużne włókna
+	for i in range(-8, 9, 4):
+		draw_line(Vector2(i, -9), Vector2(i + 1, 9), fiber_color, 0.8)
+
+	# Trzy "oczy" kokosa
+	draw_circle(Vector2(-3, -2), 1.8, shell_dark)
+	draw_circle(Vector2(0, -4), 1.8, shell_dark)
+	draw_circle(Vector2(3, -2), 1.8, shell_dark)
+	draw_circle(Vector2(-3, -2), 0.8, white_color)
+	draw_circle(Vector2(0, -4), 0.8, white_color)
+	draw_circle(Vector2(3, -2), 0.8, white_color)
+
+	# Odblask
+	draw_circle(Vector2(-3, -4), 3.0, Color(shell_light.r, shell_light.g, shell_light.b, 0.4))
+
+	_draw_eyes(Vector2(-3, 3), Vector2(3, 3))
 
 func _draw_eyes(left_pos: Vector2, right_pos: Vector2):
 	draw_circle(left_pos, 2.0, Color.WHITE)
