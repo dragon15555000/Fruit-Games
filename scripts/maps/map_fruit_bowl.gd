@@ -1,4 +1,4 @@
-extends "res://scripts/map/map_base.gd"
+extends "res://scripts/maps/map_base.gd"
 ## Mapa 1: Fruit Bowl — letnia otwarta arena z owocowym ogrodem.
 
 func _get_sky_top() -> Color:    return Color(0.32, 0.62, 0.98)

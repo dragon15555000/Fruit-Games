@@ -17,8 +17,8 @@ config/icon="res://assets/icons/icon.svg"
 
 [autoload]
 
-Global="*res://scenes/global.tscn"
-ModifierSystem="*res://scripts/core/Modifier_System.gd"
+Global="*res://scenes/autoload/global.tscn"
+ModifierSystem="*res://scripts/core/modifier_system.gd"
 MultiplayerManager="*res://scripts/multiplayer/multiplayermanager.gd"
 AudioManager="*res://scripts/core/audio_manager.gd"
 SettingsManager="*res://scripts/core/settings_manager.gd"

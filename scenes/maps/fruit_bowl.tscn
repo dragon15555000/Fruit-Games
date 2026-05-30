@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://map_fruit_bowl"]
 
-[ext_resource type="Script" path="res://scripts/map/map_fruit_bowl.gd" id="1_bg"]
+[ext_resource type="Script" path="res://scripts/maps/map_fruit_bowl.gd" id="1_bg"]
 
 [sub_resource type="RectangleShape2D" id="ground_shape"]
 size = Vector2(384, 40)

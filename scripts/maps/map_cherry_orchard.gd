@@ -1,4 +1,4 @@
-extends "res://scripts/map/map_base.gd"
+extends "res://scripts/maps/map_base.gd"
 ## Mapa 6: Cherry Orchard — wiosenny sad z kwitnącymi wiśniami.
 
 func _get_sky_top() -> Color:    return Color(0.95, 0.72, 0.82)

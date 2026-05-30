@@ -1,4 +1,4 @@
-extends "res://scripts/map/map_base.gd"
+extends "res://scripts/maps/map_base.gd"
 ## Mapa 2: Juice Factory — mroczna fabryka soku, industrialne rury i platformy.
 
 func _get_sky_top() -> Color:    return Color(0.10, 0.08, 0.16)

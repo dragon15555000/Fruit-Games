@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://d3l8yjytwx16b"]
 
 [ext_resource type="Script" path="res://scripts/core/global.gd" id="1_11p7f"]
-[ext_resource type="Script" path="res://scripts/core/Modifier_System.gd" id="2_sdtya"]
+[ext_resource type="Script" path="res://scripts/core/modifier_system.gd" id="2_sdtya"]
 
 [node name="Global" type="Node"]
 script = ExtResource("1_11p7f")

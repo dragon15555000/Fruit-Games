@@ -1,4 +1,4 @@
-extends "res://scripts/map/map_base.gd"
+extends "res://scripts/maps/map_base.gd"
 ## Mapa 3: Canopy — nocny las tropikalny, platformy na gałęziach drzew.
 
 func _get_sky_top() -> Color:    return Color(0.04, 0.06, 0.18)

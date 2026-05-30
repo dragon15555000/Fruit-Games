@@ -1,4 +1,4 @@
-extends "res://scripts/map/map_base.gd"
+extends "res://scripts/maps/map_base.gd"
 ## Mapa 4: Blender — wirująca arena wewnątrz gigantycznego blendera.
 
 func _get_sky_top() -> Color:    return Color(0.78, 0.82, 0.92)

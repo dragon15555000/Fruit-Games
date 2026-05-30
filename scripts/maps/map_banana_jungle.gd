@@ -1,4 +1,4 @@
-extends "res://scripts/map/map_base.gd"
+extends "res://scripts/maps/map_base.gd"
 ## Mapa 7: Banana Jungle — tropikalna dżungla bananowa.
 
 func _get_sky_top() -> Color:    return Color(0.18, 0.42, 0.12)

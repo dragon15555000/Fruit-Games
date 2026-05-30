@@ -1,4 +1,4 @@
-extends "res://scripts/map/map_base.gd"
+extends "res://scripts/maps/map_base.gd"
 ## Mapa 5: Watermelon Caves — wnętrze gigantycznego arbuza, jaskinia z miąższem.
 
 func _get_sky_top() -> Color:    return Color(0.65, 0.08, 0.12)  # głęboki czerwony miąższ
