@@ -17,6 +17,8 @@ mono_crash.*.json
 
 # Build / export
 export/
+build/
+!build/export_presets.cfg
 builds/
 *.apk
 *.aab
