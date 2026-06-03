@@ -3,19 +3,45 @@
 **2D arena shooter** built in Godot 4.3 — local multiplayer for 2–4 players (or vs bots).
 
 [![Godot](https://img.shields.io/badge/Godot-4.3-478CBF?logo=godot-engine)](https://godotengine.org/)
+[![GDScript](https://img.shields.io/badge/GDScript-4.x-478CBF)](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
 ## EN
 
-### Gameplay
+### Overview
 
-Players fight in a free-for-all arena. The last one standing scores points. Losers choose modifiers between rounds (anti-snowball mechanic). Every 5 rounds a set summary is shown.
+Fruit-themed FFA arena brawler with 6 playable characters, ~45 modifiers, a rot-timer mechanic, and a full anti-snowball system. Built entirely in Godot 4.3 using GDScript and the autoload architecture pattern.
 
-- **Round** — fight until one player remains
-- **Modifiers** — losers draw 3 upgrade cards and pick 1
-- **Set** — summary every 5 rounds
+### Core Systems
+
+| System | Description |
+|---|---|
+| **ModifierSystem** | Losers draw 3 upgrade cards per round; cards are pooled from ~45 modifiers across 5 categories |
+| **Rot mechanic** | Per-player countdown (default 120s); player is eliminated when timer expires — prevents stalling |
+| **Anti-snowball** | Only losers receive modifier choices; winner gets no upgrade advantage between rounds |
+| **Bot AI** | Fully playable vs bots; any slot can be Player / Bot / Disabled |
+| **Set structure** | Rounds aggregate into sets (every 5 rounds); running score display |
+| **Autoload managers** | `Global` · `ModifierSystem` · `MultiplayerManager` · `AudioManager` · `SettingsManager` |
+| **LAN multiplayer** | Experimental ENet-based network play |
+
+### Characters (6)
+
+| Character | Type |
+|---|---|
+| Strawberry | Ranged |
+| Orange | Ranged |
+| Grape | Ranged |
+| Lemon | Ranged |
+| Watermelon | Ranged |
+| Pineapple | Melee |
+
+Each character has unique stats (speed, HP, fire rate) and a distinct projectile type.
+
+### Modifier Categories (~45 total)
+
+`Projectile` · `Defense` · `Bounce` · `Passive/Area` · `Legacy`
 
 ### Scoring
 
@@ -26,89 +52,62 @@ Players fight in a free-for-all arena. The last one standing scores points. Lose
 | 3rd | 1 |
 | 4th | 0 |
 
-### Characters (6)
-
-Strawberry, Orange, Pineapple (melee), Grape, Lemon, Watermelon — each with unique stats and projectiles.
-
-### Modifiers (~45)
-
-Categories: Projectile · Defense · Bounce · Passive/Area · Legacy
-
-### Rot Mechanic
-
-Each player has a limited time (default 120s). When the timer runs out, the fruit rots and is eliminated from the round.
-
 ### How to Run
 
 1. Open the project in **Godot 4.3** (or later compatible version)
 2. Press **F5**
-3. In the main menu configure slots (Player / Bot / Disabled)
+3. Configure slots in the main menu (Player / Bot / Disabled)
 4. Click **Start** — minimum 2 active slots required
 
----
-
-## PL
-
-### Rozgrywka
-
-Gracze walczą na arenie w trybie FFA. Ostatni żywy zdobywa punkty. Przegrani wybierają modyfikatory między rundami (mechanika anti-snowball). Co 5 rund następuje podsumowanie seta.
-
-- **Runda** — walka do ostatniego żywego
-- **Modyfikatory** — przegrani losują 3 karty ulepszeń i wybierają 1
-- **Set** — podsumowanie co 5 rund
-
-### Punktacja
-
-| Miejsce | Punkty |
-|---|---|
-| 1. | 3 |
-| 2. | 2 |
-| 3. | 1 |
-| 4. | 0 |
-
-### Postacie (6)
-
-Strawberry, Orange, Pineapple (melee), Grape, Lemon, Watermelon — każda z unikalnymi statystykami i pociskami.
-
-### Modyfikatory (~45)
-
-Kategorie: Projectile · Defense · Bounce · Passive/Area · Legacy
-
-### Gnicie (Rot)
-
-Każdy gracz ma ograniczony czas (domyślnie 120s). Po upływie czasu owoc gnije i odpada z rundy.
-
-### Uruchomienie
-
-1. Otwórz projekt w **Godot 4.3** (lub nowszym kompatybilnym)
-2. Naciśnij **F5**
-3. W menu głównym ustaw sloty (Gracz / Bot / Wyłączony)
-4. Kliknij **Start** — wymagane minimum 2 aktywne sloty
-
----
-
-## Project Structure / Struktura projektu
+### Project Structure
 
 ```
 Fruit-Game/
 ├── scenes/
-│   ├── characters/     # 6 characters / 6 postaci
-│   ├── bullets/        # per-character projectiles / pociski
-│   ├── effects/        # explosions, melee, poison / efekty
-│   ├── maps/           # 6 maps / 6 map
-│   └── ui/             # menus, HUD, modifiers / menu, HUD, modyfikatory
+│   ├── characters/     # 6 character scenes
+│   ├── bullets/        # per-character projectiles
+│   ├── effects/        # explosions, melee, poison
+│   ├── maps/           # 6 arena maps
+│   └── ui/             # menus, lobby, HUD, modifier picker
 ├── scripts/
-│   ├── ai/
-│   ├── characters/
-│   ├── core/           # Global, ModifierSystem, Audio, Settings
+│   ├── ai/             # bot logic
+│   ├── characters/     # character controllers
+│   ├── core/           # autoload managers
 │   ├── effects/
 │   ├── map/
-│   ├── multiplayer/
+│   ├── multiplayer/    # ENet networking
 │   └── ui/
 └── assets/
     ├── audio/
     └── sprites/
 ```
+
+---
+
+## PL
+
+### Przegląd
+
+Arena FFA w klimacie owocowym z 6 postaciami, ~45 modyfikatorami, mechaniką gnicia (rot-timer) i pełnym systemem anti-snowball. Zbudowana w Godot 4.3 z użyciem GDScript i wzorca autoload.
+
+### Kluczowe systemy
+
+| System | Opis |
+|---|---|
+| **ModifierSystem** | Przegrani losują 3 karty ulepszeń per runda z puli ~45 modyfikatorów w 5 kategoriach |
+| **Gnicie (Rot)** | Odliczanie per gracz (domyślnie 120s); eliminacja po upływie czasu — zapobiega pasywnej grze |
+| **Anti-snowball** | Tylko przegrani otrzymują modyfikatory; zwycięzca nie dostaje przewagi między rundami |
+| **Boty** | Każdy slot można ustawić na Gracz / Bot / Wyłączony |
+| **Struktura seta** | Co 5 rund podsumowanie wyników |
+| **Autoloady** | `Global` · `ModifierSystem` · `MultiplayerManager` · `AudioManager` · `SettingsManager` |
+| **LAN** | Eksperymentalny multiplayer przez sieć (ENet) |
+
+### Uruchomienie
+
+1. Otwórz projekt w **Godot 4.3** (lub nowszym kompatybilnym)
+2. Naciśnij **F5**
+3. Skonfiguruj sloty w menu (Gracz / Bot / Wyłączony)
+4. Kliknij **Start** — wymagane minimum 2 aktywne sloty
 
 ---
 
