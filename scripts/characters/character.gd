@@ -204,12 +204,12 @@ func die() -> void:
 	var killer_name: String = ""
 	if killer_reason.contains("od "):
 		killer_name = killer_reason.get_slice("od ", 1)
-	var death_fx = _get_fatality_fx(killer_name)
+	var death_fx = _get_fatality_fx(character_name, killer_name)
 	Global.spawn_particles(global_position, death_fx["color"], int(death_fx["amount"]))
 	if Global.main_game:
-		_spawn_fatality_burst(death_fx["color"], killer_name)
+		_spawn_fatality_burst(death_fx["burst"], death_fx["color"], killer_name)
 	if killer_name != "":
-		Global.kill_feed_message.emit("☠️ " + character_name + " został wykończony przez " + killer_name)
+		Global.kill_feed_message.emit("☠️ " + death_fx["label"])
 
 	Global.alive[character_name] = false
 	Global.death_order.append(character_name)
@@ -217,60 +217,91 @@ func die() -> void:
 	queue_free()
 
 
-func _get_fatality_fx(killer_name: String) -> Dictionary:
+func _get_fatality_fx(target_name: String, killer_name: String) -> Dictionary:
+	var pair_fx = {
+		"Strawberry|Pineapple": {
+			"label": "🍍 " + target_name + " został rozgnieciony przez " + killer_name,
+			"color": Color(1.0, 0.35, 0.18),
+			"burst": Color(1.0, 0.9, 0.25),
+			"amount": 36
+		},
+		"Pineapple|Watermelon": {
+			"label": "💥 " + target_name + " eksplodował pod ciosem " + killer_name,
+			"color": Color(0.95, 0.55, 0.15),
+			"burst": Color(0.25, 0.9, 0.55),
+			"amount": 42
+		},
+		"Watermelon|Orange": {
+			"label": "🍊 " + target_name + " rozsypał się od precyzyjnego strzału " + killer_name,
+			"color": Color(1.0, 0.2, 0.45),
+			"burst": Color(1.0, 0.75, 0.1),
+			"amount": 30
+		},
+		"Grape|Lemon": {
+			"label": "🍋 " + target_name + " pękł w kwaśnym rozbłysku po trafieniu " + killer_name,
+			"color": Color(0.65, 0.25, 0.85),
+			"burst": Color(1.0, 1.0, 0.25),
+			"amount": 28
+		},
+		"Lemon|Strawberry": {
+			"label": "🍓 " + target_name + " został rozszarpany przez " + killer_name,
+			"color": Color(1.0, 0.95, 0.2),
+			"burst": Color(1.0, 0.35, 0.35),
+			"amount": 26
+		},
+		"Orange|Grape": {
+			"label": "🍇 " + target_name + " zniknął w fioletowym wybuchu po strzale " + killer_name,
+			"color": Color(1.0, 0.55, 0.1),
+			"burst": Color(0.7, 0.3, 1.0),
+			"amount": 24
+		}
+	}
+	var key = target_name + "|" + killer_name
+	if pair_fx.has(key):
+		return pair_fx[key]
+
 	var target_fx = {
-		"Strawberry": {"color": Color(0.95, 0.15, 0.2), "amount": 20, "burst": Color(1.0, 0.55, 0.15)},
-		"Orange": {"color": Color(1.0, 0.55, 0.1), "amount": 18, "burst": Color(1.0, 0.85, 0.2)},
-		"Pineapple": {"color": Color(0.85, 0.75, 0.15), "amount": 26, "burst": Color(0.55, 1.0, 0.25)},
-		"Grape": {"color": Color(0.55, 0.2, 0.75), "amount": 19, "burst": Color(0.75, 0.3, 1.0)},
-		"Lemon": {"color": Color(0.95, 0.95, 0.25), "amount": 17, "burst": Color(0.7, 1.0, 0.15)},
-		"Watermelon": {"color": Color(0.15, 0.75, 0.25), "amount": 28, "burst": Color(1.0, 0.2, 0.4)},
+		"Strawberry": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.95, 0.15, 0.2), "burst": Color(1.0, 0.55, 0.15), "amount": 20},
+		"Orange": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(1.0, 0.55, 0.1), "burst": Color(1.0, 0.85, 0.2), "amount": 18},
+		"Pineapple": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.85, 0.75, 0.15), "burst": Color(0.55, 1.0, 0.25), "amount": 26},
+		"Grape": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.55, 0.2, 0.75), "burst": Color(0.75, 0.3, 1.0), "amount": 19},
+		"Lemon": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.95, 0.95, 0.25), "burst": Color(0.7, 1.0, 0.15), "amount": 17},
+		"Watermelon": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.15, 0.75, 0.25), "burst": Color(1.0, 0.2, 0.4), "amount": 28},
 	}
-	var killer_fx = {
-		"Strawberry": Color(1.0, 0.3, 0.3),
-		"Orange": Color(1.0, 0.55, 0.15),
-		"Pineapple": Color(1.0, 0.95, 0.2),
-		"Grape": Color(0.7, 0.3, 1.0),
-		"Lemon": Color(1.0, 1.0, 0.4),
-		"Watermelon": Color(0.95, 0.25, 0.35),
-	}
-	var fx = target_fx.get(character_name, {"color": Color(0.5, 0, 0), "amount": 20, "burst": Color(1.0, 0.4, 0.15)})
-	if killer_fx.has(killer_name):
-		fx["burst"] = killer_fx[killer_name]
-	return fx
+	return target_fx.get(target_name, {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.5, 0, 0), "burst": Color(1.0, 0.4, 0.15), "amount": 20})
 
 
-func _spawn_fatality_burst(color: Color, killer_name: String) -> void:
+func _spawn_fatality_burst(burst_color: Color, core_color: Color, killer_name: String) -> void:
 	if not Global.main_game:
 		return
 	var burst = CPUParticles2D.new()
 	burst.position = global_position
 	burst.one_shot = true
 	burst.emitting = true
-	burst.amount = 14
-	burst.lifetime = 0.45
-	burst.spread = 120.0
-	burst.gravity = Vector2(0, 220)
-	burst.initial_velocity_min = 160
-	burst.initial_velocity_max = 280
-	burst.scale_amount_min = 2.0
-	burst.scale_amount_max = 4.0
-	burst.color = color.lightened(0.2)
+	burst.amount = 18
+	burst.lifetime = 0.55
+	burst.spread = 180.0
+	burst.gravity = Vector2(0, 260)
+	burst.initial_velocity_min = 180
+	burst.initial_velocity_max = 320
+	burst.scale_amount_min = 2.5
+	burst.scale_amount_max = 5.0
+	burst.color = burst_color.lightened(0.2)
 	Global.main_game.add_child(burst)
 	if killer_name != "":
 		var ring = CPUParticles2D.new()
 		ring.position = global_position
 		ring.one_shot = true
 		ring.emitting = true
-		ring.amount = 10
-		ring.lifetime = 0.35
+		ring.amount = 24
+		ring.lifetime = 0.28
 		ring.spread = 360.0
 		ring.gravity = Vector2.ZERO
-		ring.initial_velocity_min = 90
-		ring.initial_velocity_max = 120
-		ring.scale_amount_min = 1.5
-		ring.scale_amount_max = 3.0
-		ring.color = color
+		ring.initial_velocity_min = 140
+		ring.initial_velocity_max = 180
+		ring.scale_amount_min = 1.2
+		ring.scale_amount_max = 2.4
+		ring.color = core_color
 		Global.main_game.add_child(ring)
 
 
