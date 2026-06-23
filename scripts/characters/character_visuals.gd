@@ -9,6 +9,7 @@ var _recoil_time: float  = 0.0
 var _sprite:      Node2D = null
 var _base_scale:  Vector2 = Vector2.ONE
 var _hp_scale:     float  = 1.0
+var _critical_pulse: bool = false
 
 
 func setup(char_name: String, sprite: Node2D) -> void:
@@ -26,6 +27,10 @@ func set_hp_scaling(scale_factor: float) -> void:
 	if not is_instance_valid(_sprite):
 		return
 	_hp_scale = clampf(scale_factor, 0.72, 1.0)
+
+
+func set_critical_ogryzek(active: bool) -> void:
+	_critical_pulse = active
 
 
 func _create_name_label(char_name: String) -> void:
@@ -68,5 +73,8 @@ func _process(delta: float) -> void:
 
 	if _recoil_time > 0.0:
 		base_anim_scale *= (1.0 + _recoil_time * 2.0)
+
+	if _critical_pulse:
+		base_anim_scale *= 1.0 + sin(_anim_time * 12.0) * 0.05
 
 	_sprite.scale = _base_scale * _hp_scale * base_anim_scale

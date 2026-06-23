@@ -37,6 +37,7 @@ var hp_ratio: float = 1.0
 var speed_scale: float = 1.0
 var knockback_scale: float = 1.0
 var hp_visual_scale: float = 1.0
+var is_critical_ogryzek: bool = false
 
 # ── KLUCZOWA FLAGA — zapobiega wielokrotnemu wywołaniu die() ─────────────────
 # Problem: queue_free() nie usuwa węzła natychmiast. _physics_process może być
@@ -413,12 +414,19 @@ func _refresh_hp_scaled_state() -> void:
 	var max_hp = float(Global.base_characters.get(character_name, {}).get("hp", 100))
 	var current_hp = float(Global.characters.get(character_name, {}).get("hp", max_hp))
 	hp_ratio = clampf(current_hp / max_hp, 0.0, 1.0)
+	is_critical_ogryzek = hp_ratio <= 0.25
 
 	# Prawo Ogryzka: niższe HP = mniejsza postać, szybszy ruch, mocniejszy knockback.
 	hp_visual_scale = lerpf(0.62, 1.0, hp_ratio)
 	speed_scale = lerpf(1.55, 1.0, hp_ratio)
 	knockback_scale = lerpf(2.3, 1.0, hp_ratio)
+	if is_critical_ogryzek:
+		hp_visual_scale = min(hp_visual_scale, 0.54)
+		speed_scale = max(speed_scale, 1.75)
+		knockback_scale = max(knockback_scale, 2.9)
 	max_speed = base_speed * speed_scale
 
 	if _visuals and _visuals.has_method("set_hp_scaling"):
 		_visuals.set_hp_scaling(hp_visual_scale)
+	if _visuals and _visuals.has_method("set_critical_ogryzek"):
+		_visuals.set_critical_ogryzek(is_critical_ogryzek)
