@@ -86,6 +86,8 @@ const CHARACTER_COLORS := {
 	"Watermelon": Color(0.3, 0.9, 0.45, 1.0),
 }
 
+var _preview_tween: Tween = null
+
 func _ready():
 	if Global.is_network_game:
 		if multiplayer.is_server():
@@ -128,6 +130,8 @@ func _set_default_character_info() -> void:
 		character_info.text = DEFAULT_INFO_TEXT
 	if is_instance_valid(character_panel):
 		character_panel.modulate = Color(1, 1, 1, 1)
+		character_panel.scale = Vector2.ONE
+	_stop_preview_tween()
 
 
 func _on_character_hover_start(character_name: String) -> void:
@@ -137,6 +141,7 @@ func _on_character_hover_start(character_name: String) -> void:
 		return
 	character_info.text = _format_preview_text(character_name)
 	_apply_character_color(character_name)
+	_play_preview_tween()
 
 
 func _on_character_hover_end() -> void:
@@ -232,6 +237,25 @@ func _apply_character_color(character_name: String) -> void:
 		return
 	var tint = CHARACTER_COLORS.get(character_name, Color(1, 1, 1, 1))
 	character_panel.modulate = tint.lerp(Color(1, 1, 1, 1), 0.72)
+
+
+func _play_preview_tween() -> void:
+	if not is_instance_valid(character_panel):
+		return
+	_stop_preview_tween()
+	_preview_tween = create_tween()
+	_preview_tween.set_trans(Tween.TRANS_SINE)
+	_preview_tween.set_ease(Tween.EASE_OUT)
+	_preview_tween.tween_property(character_panel, "scale", Vector2(1.02, 1.02), 0.12)
+	_preview_tween.parallel().tween_property(character_panel, "modulate:a", 0.92, 0.12)
+	_preview_tween.tween_property(character_panel, "scale", Vector2(1.0, 1.0), 0.14)
+	_preview_tween.parallel().tween_property(character_panel, "modulate:a", 1.0, 0.14)
+
+
+func _stop_preview_tween() -> void:
+	if is_instance_valid(_preview_tween):
+		_preview_tween.kill()
+	_preview_tween = null
 
 
 func _on_strawberry_2_pressed():
