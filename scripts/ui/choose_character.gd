@@ -11,6 +11,71 @@ extends Control
 	"Watermelon": $Watermelon2,
 }
 
+const DEFAULT_INFO_TEXT := "[b]Wybierz owoc[/b]\nNajedź myszą na postać, aby zobaczyć jej styl gry."
+
+const CHARACTER_PREVIEWS := {
+	"Strawberry": {
+		"title": "Strawberry",
+		"style": "Mobilny duelist",
+		"hp": 110,
+		"speed": 92,
+		"dmg": 23,
+		"fire_rate": 0.62,
+		"range": 140,
+		"note": "double_shot: nacisk z dwóch pocisków"
+	},
+	"Orange": {
+		"title": "Orange",
+		"style": "Snajper / artyleria",
+		"hp": 70,
+		"speed": 88,
+		"dmg": 66,
+		"fire_rate": 2.2,
+		"range": 470,
+		"note": "explosive: mocny strzał i wybuch"
+	},
+	"Pineapple": {
+		"title": "Pineapple",
+		"style": "Melee brawler",
+		"hp": 240,
+		"speed": 58,
+		"dmg": 38,
+		"fire_rate": 0.55,
+		"range": 72,
+		"note": "sticky + melee: walka w zwarciu"
+	},
+	"Grape": {
+		"title": "Grape",
+		"style": "Szybkostrzelny spammer",
+		"hp": 82,
+		"speed": 118,
+		"dmg": 11,
+		"fire_rate": 0.12,
+		"range": 200,
+		"note": "shotgun: ciągła presja"
+	},
+	"Lemon": {
+		"title": "Lemon",
+		"style": "Kontrola przestrzeni",
+		"hp": 88,
+		"speed": 98,
+		"dmg": 16,
+		"fire_rate": 0.72,
+		"range": 260,
+		"note": "magnetic_seed + fermentation: prowadzenie i nacisk"
+	},
+	"Watermelon": {
+		"title": "Watermelon",
+		"style": "Ciężki tank",
+		"hp": 310,
+		"speed": 46,
+		"dmg": 72,
+		"fire_rate": 1.35,
+		"range": 100,
+		"note": "stone_seed + armor: wytrzymałość i kara za błąd"
+	},
+}
+
 func _ready():
 	if Global.is_network_game:
 		if multiplayer.is_server():
@@ -25,12 +90,48 @@ func _ready():
 		MultiplayerManager.pick_synced.connect(_on_pick_synced)
 	else:
 		Global.reset_selection()
+	_bind_preview_signals()
+	_set_default_character_info()
 	update_ui()
 	# Jeśli bieżący slot to bot — auto-pick po krótkim opóźnieniu
 	_try_bot_auto_pick()
 
 
 func _on_pick_synced() -> void:
+	update_ui()
+
+
+func _bind_preview_signals() -> void:
+	for character_name in buttons:
+		var button = buttons[character_name]
+		if not is_instance_valid(button):
+			continue
+		var preview_name := character_name
+		button.mouse_entered.connect(func() -> void:
+			_on_character_hover_start(preview_name)
+		)
+		button.mouse_exited.connect(_on_character_hover_end)
+
+
+func _set_default_character_info() -> void:
+	if is_instance_valid(character_info):
+		character_info.text = DEFAULT_INFO_TEXT
+
+
+func _on_character_hover_start(character_name: String) -> void:
+	if not is_instance_valid(character_info):
+		return
+	if not CHARACTER_PREVIEWS.has(character_name):
+		return
+	character_info.text = _format_preview_text(character_name)
+
+
+func _on_character_hover_end() -> void:
+	if not is_instance_valid(character_info):
+		return
+	if Global.current_picking_player == 0:
+		_set_default_character_info()
+		return
 	update_ui()
 
 
@@ -54,8 +155,7 @@ func update_ui():
 			buttons[character].disabled = true
 	else:
 		picking_label.text = "Gracz %d wybiera!" % slot
-		if is_instance_valid(character_info):
-			character_info.text = _build_character_info()
+		_set_default_character_info()
 		var my_turn = _is_my_turn()
 		for character in buttons:
 			buttons[character].disabled = not Global.available_characters.has(character) or not my_turn
@@ -100,28 +200,18 @@ func _count_off_slots() -> int:
 	return count
 
 
-func _build_character_info() -> String:
-	var lines = ["[b]Balans postaci[/b]"]
-	var stats = {
-		"Strawberry": {"style": "Mobilny duelist", "hp": 110, "speed": 92, "dmg": 23, "fire_rate": 0.62, "range": 140},
-		"Orange": {"style": "Snajper / artyleria", "hp": 70, "speed": 88, "dmg": 66, "fire_rate": 2.2, "range": 470},
-		"Pineapple": {"style": "Melee brawler", "hp": 240, "speed": 58, "dmg": 38, "fire_rate": 0.55, "range": 72},
-		"Grape": {"style": "Szybkostrzelny spammer", "hp": 82, "speed": 118, "dmg": 11, "fire_rate": 0.12, "range": 200},
-		"Lemon": {"style": "Kontrola przestrzeni", "hp": 88, "speed": 98, "dmg": 16, "fire_rate": 0.72, "range": 260},
-		"Watermelon": {"style": "Ciężki tank", "hp": 310, "speed": 46, "dmg": 72, "fire_rate": 1.35, "range": 100},
-	}
-	for name in ["Strawberry", "Orange", "Pineapple", "Grape", "Lemon", "Watermelon"]:
-		var s = stats[name]
-		var note = ""
-		match name:
-			"Strawberry": note = "double_shot"
-			"Orange": note = "explosive"
-			"Pineapple": note = "sticky + melee"
-			"Grape": note = "shotgun"
-			"Lemon": note = "magnetic_seed + fermentation"
-			"Watermelon": note = "stone_seed + armor"
-		lines.append("%s: %s | HP %s | SPD %s | DMG %s | FR %ss | %s" % [name, s["style"], str(s["hp"]), str(s["speed"]), str(s["dmg"]), str(s["fire_rate"]), note])
-	return "\n".join(lines)
+func _format_preview_text(character_name: String) -> String:
+	var s = CHARACTER_PREVIEWS[character_name]
+	return "[b]%s[/b]\n%s\nHP %s | SPD %s | DMG %s | FR %ss | Range %s\n%s" % [
+		s["title"],
+		s["style"],
+		str(s["hp"]),
+		str(s["speed"]),
+		str(s["dmg"]),
+		str(s["fire_rate"]),
+		str(s["range"]),
+		s["note"]
+	]
 
 
 func _on_strawberry_2_pressed():
