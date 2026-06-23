@@ -415,9 +415,9 @@ func _refresh_hp_scaled_state() -> void:
 	hp_ratio = clampf(current_hp / max_hp, 0.0, 1.0)
 
 	# Prawo Ogryzka: niższe HP = mniejsza postać, szybszy ruch, mocniejszy knockback.
-	hp_visual_scale = lerpf(0.72, 1.0, hp_ratio)
-	speed_scale = lerpf(1.4, 1.0, hp_ratio)
-	knockback_scale = lerpf(1.8, 1.0, hp_ratio)
+	hp_visual_scale = lerpf(0.62, 1.0, hp_ratio)
+	speed_scale = lerpf(1.55, 1.0, hp_ratio)
+	knockback_scale = lerpf(2.3, 1.0, hp_ratio)
 	max_speed = base_speed * speed_scale
 
 	if _visuals and _visuals.has_method("set_hp_scaling"):
