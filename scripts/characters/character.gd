@@ -95,6 +95,10 @@ var   gravity:      float = 15.0
 const MAX_GRAVITY:  float = 20.0
 const ACCELERATION: float = 16.0
 const FRICTION:     float = 18.0
+const STUCK_RECOVERY_SPEED: float = 18.0
+const WALL_STUCK_FRAMES: int = 8
+var _wall_stuck_frames: int = 0
+var _last_floor_y: float = INF
 
 
 # ─────────────────────────────────────────────
@@ -240,6 +244,7 @@ func _physics_process(delta: float) -> void:
 	if is_on_floor():
 		coyote_time_activated = false
 		gravity = lerp(gravity, 12.0, 12.0 * delta)
+		_last_floor_y = global_position.y
 	else:
 		if CoyoteTimer.is_stopped() and not coyote_time_activated:
 			CoyoteTimer.start()
@@ -280,3 +285,18 @@ func _physics_process(delta: float) -> void:
 
 	velocity.y += gravity
 	move_and_slide()
+
+	# Jeżeli postać wciska się w ścianę przez kilka klatek, lekko odpychamy ją od przeszkody.
+	var touching_left := is_on_wall() and get_wall_normal().x > 0.0
+	var touching_right := is_on_wall() and get_wall_normal().x < 0.0
+	if is_on_floor():
+		_wall_stuck_frames = 0
+	elif touching_left or touching_right:
+		_wall_stuck_frames += 1
+		if _wall_stuck_frames >= WALL_STUCK_FRAMES:
+			velocity.x = -get_wall_normal().x * STUCK_RECOVERY_SPEED
+			velocity.y = min(velocity.y, JUMP_HEIGHT * 0.35)
+			global_position.x += -get_wall_normal().x * 2.0
+			_wall_stuck_frames = 0
+	else:
+		_wall_stuck_frames = 0

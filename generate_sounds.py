@@ -150,6 +150,47 @@ def generate_bgm():
         
     return samples
 
+def generate_bgm_combat():
+    samples = []
+    duration = 8.0
+    notes = [
+        (659.25, 0.0, 0.25), (783.99, 0.25, 0.25), (880.00, 0.5, 0.25), (783.99, 0.75, 0.25),
+        (659.25, 1.0, 0.25), (523.25, 1.25, 0.25), (587.33, 1.5, 0.25), (659.25, 1.75, 0.25),
+        (880.00, 2.0, 0.25), (987.77, 2.25, 0.25), (1046.50, 2.5, 0.25), (987.77, 2.75, 0.25),
+        (880.00, 3.0, 0.25), (783.99, 3.25, 0.25), (659.25, 3.5, 0.25), (587.33, 3.75, 0.25),
+        (659.25, 4.0, 0.25), (783.99, 4.25, 0.25), (880.00, 4.5, 0.25), (987.77, 4.75, 0.25),
+        (1046.50, 5.0, 0.25), (987.77, 5.25, 0.25), (880.00, 5.5, 0.25), (783.99, 5.75, 0.25),
+        (659.25, 6.0, 0.25), (587.33, 6.25, 0.25), (523.25, 6.5, 0.25), (587.33, 6.75, 0.25),
+        (659.25, 7.0, 0.5), (783.99, 7.5, 0.5)
+    ]
+    bass_notes = [
+        (220.0, 0.0, 1.0), (246.94, 1.0, 1.0), (196.00, 2.0, 1.0), (174.61, 3.0, 1.0),
+        (220.0, 4.0, 1.0), (246.94, 5.0, 1.0), (196.00, 6.0, 1.0), (174.61, 7.0, 1.0)
+    ]
+    for i in range(int(SAMPLE_RATE * duration)):
+        t = i / SAMPLE_RATE
+        val = 0.0
+        for freq, start, length in notes:
+            if start <= t < start + length:
+                local_t = t - start
+                env = math.exp(-local_t * 7)
+                osc = 2.0 * abs(2.0 * (local_t * freq - math.floor(local_t * freq + 0.5))) - 1.0
+                val += osc * env * 0.12
+        for freq, start, length in bass_notes:
+            if start <= t < start + length:
+                local_t = t - start
+                env = 1.0 if local_t < length * 0.85 else 0.0
+                osc = 1.0 if math.sin(2 * math.pi * freq * local_t) > 0 else -1.0
+                val += osc * env * 0.11
+        kick_t = t % 0.25
+        if kick_t < 0.08:
+            val += math.sin(2 * math.pi * (90 - 1200 * kick_t) * kick_t) * math.exp(-kick_t * 40) * 0.35
+        hihat_t = t % 0.125
+        if hihat_t < 0.03:
+            val += random.uniform(-1.0, 1.0) * math.exp(-hihat_t * 80) * 0.04
+        samples.append(val)
+    return samples
+
 if __name__ == "__main__":
     out_dir = "assets/audio"
     print(f"Generating sounds in {out_dir}...")
@@ -160,4 +201,5 @@ if __name__ == "__main__":
     save_wav(f"{out_dir}/ui_click.wav", generate_ui_click())
     save_wav(f"{out_dir}/melee.wav", generate_melee())
     save_wav(f"{out_dir}/bgm.wav", generate_bgm())
+    save_wav(f"{out_dir}/bgm_combat.wav", generate_bgm_combat())
     print("Done!")

@@ -11,6 +11,8 @@ var retarget_timer: float = 0.0
 var shoot_timer: float = 0.0
 var jump_timer: float = 0.0
 var direction: float = 0.0  # -1, 0, 1
+var stuck_timer: float = 0.0
+var last_x: float = 0.0
 
 func setup(p_character: CharacterBody2D, p_char_name: String) -> void:
 	character = p_character
@@ -18,6 +20,7 @@ func setup(p_character: CharacterBody2D, p_char_name: String) -> void:
 	# Losowy offset na timery — żeby boty nie strzelały synchronicznie
 	shoot_timer = randf() * 0.5
 	jump_timer  = randf() * 1.0
+	last_x = character.global_position.x
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(character):
@@ -28,6 +31,7 @@ func _physics_process(delta: float) -> void:
 	retarget_timer -= delta
 	shoot_timer    -= delta
 	jump_timer     -= delta
+	stuck_timer    += delta
 
 	# Co 0.5s szukaj najbliższego wroga
 	if retarget_timer <= 0.0:
@@ -71,12 +75,27 @@ func _physics_process(delta: float) -> void:
 		if randf() < 0.005:
 			_do_jump()
 
+	# Jeśli bot długo nie zmienia pozycji, przestań wciskać kierunek i spróbuj skoku.
+	if abs(character.global_position.x - last_x) < 1.0:
+		if stuck_timer > 0.9:
+			direction = 0.0
+			if jump_timer <= 0.0:
+				jump_timer = 0.9
+				_do_jump()
+			if shoot_timer > 0.15:
+				shoot_timer = min(shoot_timer, 0.15)
+	else:
+		stuck_timer = 0.0
+	last_x = character.global_position.x
+
 	# Aplikuj ruch (nadpisz input)
 	_apply_movement(delta)
 
 func _apply_movement(delta: float) -> void:
 	var cur_max = character.max_speed * 0.4 if character.is_slowed else character.max_speed
 	var vel_weight = delta * (character.ACCELERATION if direction != 0.0 else character.FRICTION)
+	if character.is_on_wall() and direction != 0.0:
+		vel_weight = delta * character.FRICTION
 	character.velocity.x = lerp(character.velocity.x, direction * cur_max, vel_weight)
 
 func _do_jump() -> void:

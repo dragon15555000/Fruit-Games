@@ -11,7 +11,7 @@ const _SOUND_PATHS: Dictionary = {
 	"bgm":      "res://assets/audio/bgm.wav",
 }
 
-# bgm_combat jest opcjonalne — gdy brak pliku, combat player używa bgm jako fallback
+# bgm_combat daje szybszy, bardziej agresywny motyw walki.
 const _BGM_COMBAT_PATH: String = "res://assets/audio/bgm_combat.wav"
 
 # Dźwięki z losową zmianą tonacji — każde trafienie i skok brzmi unikalnie
@@ -61,6 +61,7 @@ func _setup_bgm_players() -> void:
 		_combat_player.stream = load(_BGM_COMBAT_PATH)
 	elif _sounds.has("bgm"):
 		_combat_player.stream = _sounds["bgm"]
+		_combat_player.pitch_scale = 1.12
 	_combat_player.volume_db = _target_combat_db
 	add_child(_combat_player)
 
@@ -125,9 +126,13 @@ func play_ui_click() -> void:
 
 func _set_combat_mode() -> void:
 	_target_ambient_db = -25.0
-	_target_combat_db  = -10.0
+	_target_combat_db  = -8.0
+	if is_instance_valid(_combat_player):
+		_combat_player.pitch_scale = 1.0 if ResourceLoader.exists(_BGM_COMBAT_PATH) else 1.12
 
 
 func _set_ambient_mode() -> void:
 	_target_ambient_db = -10.0
 	_target_combat_db  = -80.0
+	if is_instance_valid(_combat_player):
+		_combat_player.pitch_scale = 1.0
