@@ -2,6 +2,7 @@ extends Control
 
 @onready var picking_label: Label = $PickingLabel
 @onready var character_info: RichTextLabel = $CharacterInfo
+@onready var character_panel: Control = $Panel
 @onready var buttons = {
 	"Strawberry": $Strawberry2,
 	"Orange":     $Orange2,
@@ -76,6 +77,15 @@ const CHARACTER_PREVIEWS := {
 	},
 }
 
+const CHARACTER_COLORS := {
+	"Strawberry": Color(1.0, 0.35, 0.35, 1.0),
+	"Orange": Color(1.0, 0.62, 0.18, 1.0),
+	"Pineapple": Color(0.95, 0.8, 0.2, 1.0),
+	"Grape": Color(0.7, 0.35, 1.0, 1.0),
+	"Lemon": Color(1.0, 0.96, 0.35, 1.0),
+	"Watermelon": Color(0.3, 0.9, 0.45, 1.0),
+}
+
 func _ready():
 	if Global.is_network_game:
 		if multiplayer.is_server():
@@ -116,6 +126,8 @@ func _bind_preview_signals() -> void:
 func _set_default_character_info() -> void:
 	if is_instance_valid(character_info):
 		character_info.text = DEFAULT_INFO_TEXT
+	if is_instance_valid(character_panel):
+		character_panel.modulate = Color(1, 1, 1, 1)
 
 
 func _on_character_hover_start(character_name: String) -> void:
@@ -124,6 +136,7 @@ func _on_character_hover_start(character_name: String) -> void:
 	if not CHARACTER_PREVIEWS.has(character_name):
 		return
 	character_info.text = _format_preview_text(character_name)
+	_apply_character_color(character_name)
 
 
 func _on_character_hover_end() -> void:
@@ -212,6 +225,13 @@ func _format_preview_text(character_name: String) -> String:
 		str(s["range"]),
 		s["note"]
 	]
+
+
+func _apply_character_color(character_name: String) -> void:
+	if not is_instance_valid(character_panel):
+		return
+	var tint = CHARACTER_COLORS.get(character_name, Color(1, 1, 1, 1))
+	character_panel.modulate = tint.lerp(Color(1, 1, 1, 1), 0.72)
 
 
 func _on_strawberry_2_pressed():
