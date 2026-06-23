@@ -5,11 +5,13 @@ extends CanvasLayer
 @onready var p3_label    = $Control/Margin/Grid/P3Label
 @onready var p4_label    = $Control/Margin/Grid/P4Label
 @onready var round_label = $Control/Margin/Grid/RoundLabel
+var debug_label: RichTextLabel
 
 var labels: Array
 
 func _ready() -> void:
 	labels = [p1_label, p2_label, p3_label, p4_label]
+	_setup_debug_overlay()
 	update_hud()
 
 func _process(_delta: float) -> void:
@@ -56,3 +58,36 @@ func update_hud() -> void:
 					txt += Global.modifier_registry[m]["emoji"]
 		
 		lbl.text = txt
+
+	if is_instance_valid(debug_label):
+		var debug_txt = "[b]Debug[/b]\n"
+		for i in range(4):
+			var char_name = ""
+			match i:
+				0: char_name = Global.player1_character
+				1: char_name = Global.player2_character
+				2: char_name = Global.player3_character
+				3: char_name = Global.player4_character
+			if char_name == "":
+				continue
+			var last_hit = Global.last_hit_by.get(char_name, "brak")
+			debug_txt += char_name + ": " + last_hit + "\n"
+		debug_label.text = debug_txt
+
+
+func _setup_debug_overlay() -> void:
+	var parent = $Control/Margin/Grid
+	debug_label = RichTextLabel.new()
+	debug_label.bbcode_enabled = true
+	debug_label.fit_content = true
+	debug_label.scroll_active = false
+	debug_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	debug_label.anchor_right = 1.0
+	debug_label.anchor_top = 1.0
+	debug_label.anchor_bottom = 1.0
+	debug_label.offset_left = 20.0
+	debug_label.offset_top = 170.0
+	debug_label.offset_right = 360.0
+	debug_label.offset_bottom = 320.0
+	debug_label.add_theme_font_size_override("normal_font_size", 16)
+	parent.add_child(debug_label)

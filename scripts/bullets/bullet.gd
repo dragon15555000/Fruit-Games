@@ -117,8 +117,8 @@ func _physics_process(delta: float) -> void:
 		if other.get("shooter_name") == shooter_name:    continue
 		var hit_radius = 7.0 + velocity.length() * delta * 0.35
 		if global_position.distance_to(other.global_position) < hit_radius:
-			Global.spawn_particles(global_position, Color(1.0, 0.85, 0.1), 14)
-			Global.spawn_particles(other.global_position, Color(1.0, 0.7, 0.1), 10)
+			_spawn_shatter(global_position, Color(1.0, 0.85, 0.1), 14)
+			_spawn_shatter(other.global_position, Color(1.0, 0.7, 0.1), 10)
 			if Global.main_game:
 				Global.main_game.add_shake(4.0)
 			other.call_deferred("queue_free")
@@ -171,7 +171,7 @@ func _on_body_entered(body: Node2D) -> void:
 			return
 		if body.get("shooter_name") == shooter_name:
 			return
-		Global.spawn_particles(global_position, Color(1.0, 0.85, 0.1), 14)
+		_spawn_shatter(global_position, Color(1.0, 0.85, 0.1), 14)
 		if Global.main_game:
 			Global.main_game.add_shake(3.0)
 		body.call_deferred("queue_free")
@@ -241,3 +241,23 @@ func _find_shooter() -> Node:
 		if node.get("character_name") == shooter_name:
 			return node
 	return null
+
+
+func _spawn_shatter(pos: Vector2, color: Color, amount: int) -> void:
+	Global.spawn_particles(pos, color, amount)
+	if not Global.main_game:
+		return
+	var burst = CPUParticles2D.new()
+	burst.position = pos
+	burst.one_shot = true
+	burst.emitting = true
+	burst.amount = 8
+	burst.lifetime = 0.22
+	burst.spread = 180.0
+	burst.gravity = Vector2.ZERO
+	burst.initial_velocity_min = 60
+	burst.initial_velocity_max = 120
+	burst.scale_amount_min = 0.8
+	burst.scale_amount_max = 1.8
+	burst.color = color.lightened(0.15)
+	Global.main_game.add_child(burst)
