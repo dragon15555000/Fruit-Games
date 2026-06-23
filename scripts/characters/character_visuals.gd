@@ -7,15 +7,25 @@ extends Node
 var _anim_time:   float  = 0.0
 var _recoil_time: float  = 0.0
 var _sprite:      Node2D = null
+var _base_scale:  Vector2 = Vector2.ONE
+var _hp_scale:     float  = 1.0
 
 
 func setup(char_name: String, sprite: Node2D) -> void:
 	_sprite = sprite
+	if is_instance_valid(_sprite):
+		_base_scale = _sprite.scale
 	_create_name_label(char_name)
 
 
 func trigger_recoil() -> void:
 	_recoil_time = 0.1
+
+
+func set_hp_scaling(scale_factor: float) -> void:
+	if not is_instance_valid(_sprite):
+		return
+	_hp_scale = clampf(scale_factor, 0.72, 1.0)
 
 
 func _create_name_label(char_name: String) -> void:
@@ -41,20 +51,22 @@ func _process(delta: float) -> void:
 	if not is_instance_valid(_sprite):
 		return
 
-	_sprite.scale    = Vector2.ONE
+	var base_anim_scale := Vector2.ONE
 	_sprite.rotation = 0.0
 
 	if not parent.is_on_floor():
 		var stretch: float = clamp(absf(float(parent.velocity.y)) / 500.0, 0.0, 0.3)
-		_sprite.scale = Vector2(1.0 - stretch * 0.5, 1.0 + stretch)
+		base_anim_scale = Vector2(1.0 - stretch * 0.5, 1.0 + stretch)
 	else:
 		if abs(parent.velocity.x) > 5.0:
 			_sprite.rotation = sin(_anim_time * 20.0) * 0.15
 			if parent.velocity.x < 0:
-				_sprite.scale.x = -1.0
+				base_anim_scale.x = -1.0
 		else:
-			_sprite.scale.y = 1.0 + sin(_anim_time * 5.0) * 0.03
-			_sprite.scale.x = 1.0 - sin(_anim_time * 5.0) * 0.02
+			base_anim_scale.y = 1.0 + sin(_anim_time * 5.0) * 0.03
+			base_anim_scale.x = 1.0 - sin(_anim_time * 5.0) * 0.02
 
 	if _recoil_time > 0.0:
-		_sprite.scale *= (1.0 + _recoil_time * 2.0)
+		base_anim_scale *= (1.0 + _recoil_time * 2.0)
+
+	_sprite.scale = _base_scale * _hp_scale * base_anim_scale

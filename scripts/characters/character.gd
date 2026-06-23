@@ -33,6 +33,10 @@ var is_remote: bool:
 
 var max_speed:  float = 0.0
 var base_speed: float = 0.0
+var hp_ratio: float = 1.0
+var speed_scale: float = 1.0
+var knockback_scale: float = 1.0
+var hp_visual_scale: float = 1.0
 
 # ── KLUCZOWA FLAGA — zapobiega wielokrotnemu wywołaniu die() ─────────────────
 # Problem: queue_free() nie usuwa węzła natychmiast. _physics_process może być
@@ -143,6 +147,7 @@ func _ready() -> void:
 	Reloading.wait_time  = Global.characters[character_name]["fire_rate"]
 	health_bar.max_value = Global.base_characters[character_name]["hp"]
 	health_bar.value     = Global.characters[character_name]["hp"]
+	_refresh_hp_scaled_state()
 
 	add_to_group("Players")  # wymagane przez ModifierSystem._find_character()
 
@@ -169,6 +174,9 @@ func get_input() -> void:
 func apply_slow()   -> void: if _modifier_state: _modifier_state.apply_slow()
 func apply_poison() -> void: if _modifier_state: _modifier_state.apply_poison()
 
+func get_knockback_scale() -> float:
+	return knockback_scale
+
 ## Główna brama obrażeń — wywoływana z bullet.gd.
 ## Zwraca faktyczne obrażenia po modyfikacjach (0.0 = zablokowane).
 func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
@@ -182,6 +190,7 @@ func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
 
 	AudioManager.play_sound("hit")
 	Global.spawn_particles(global_position, Color(1, 0, 0), 5)
+	_refresh_hp_scaled_state()
 
 	# Sprawdź czy cios byłby śmiertelny
 	var cur_hp = float(Global.characters[character_name]["hp"])
@@ -324,6 +333,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	health_bar.value = Global.characters[character_name]["hp"]
+	_refresh_hp_scaled_state()
 
 	# Mody pasywne
 	ModifierSystem.apply_passive(character_name, delta, self)
@@ -397,3 +407,18 @@ func _physics_process(delta: float) -> void:
 			_wall_stuck_frames = 0
 	else:
 		_wall_stuck_frames = 0
+
+
+func _refresh_hp_scaled_state() -> void:
+	var max_hp = float(Global.base_characters.get(character_name, {}).get("hp", 100))
+	var current_hp = float(Global.characters.get(character_name, {}).get("hp", max_hp))
+	hp_ratio = clampf(current_hp / max_hp, 0.0, 1.0)
+
+	# Prawo Ogryzka: niższe HP = mniejsza postać, szybszy ruch, mocniejszy knockback.
+	hp_visual_scale = lerpf(0.72, 1.0, hp_ratio)
+	speed_scale = lerpf(1.4, 1.0, hp_ratio)
+	knockback_scale = lerpf(1.8, 1.0, hp_ratio)
+	max_speed = base_speed * speed_scale
+
+	if _visuals and _visuals.has_method("set_hp_scaling"):
+		_visuals.set_hp_scaling(hp_visual_scale)

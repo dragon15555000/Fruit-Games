@@ -32,8 +32,11 @@ func _ready() -> void:
 			Global.take_damage(target_name, actual, "🍍 Cios " + shooter_name)
 			# Knockback
 			if is_instance_valid(body):
-				body.velocity.x += hit_direction.x * 200.0
-				body.velocity.y -= 100.0
+				var knockback_scale := 1.0
+				if body.has_method("get_knockback_scale"):
+					knockback_scale = body.get_knockback_scale()
+				body.velocity.x += hit_direction.x * 200.0 * knockback_scale
+				body.velocity.y -= 100.0 * knockback_scale
 			# Mody on_hit
 			if is_instance_valid(body) and Global.alive.get(target_name, false):
 				ModifierSystem.apply_on_hit(shooter_name, body, global_position, actual)
