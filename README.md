@@ -46,36 +46,10 @@ Każda postać ma też wbudowany charakter:
 
 Pineapple walczy w zwarciu — jego atak obszarowy działa zamiast zwykłego strzału.
 
-## Checklist playtestu
+Szczegółowy balans i checklistę testową przeniosłem do:
 
-Po zmianach warto sprawdzić:
-
-- Strawberry:
-  - czy podwójny strzał daje wyraźną presję
-  - czy mobilność jest odczuwalna
-- Orange:
-  - czy wysoki DMG i eksplozja dają mocny pojedynczy impact
-  - czy wolniejsze tempo ognia nadal jest grywalne
-- Pineapple:
-  - czy melee faktycznie wymusza walkę blisko
-  - czy sticky pomaga, ale nie robi z tej postaci pewnego fraga
-- Grape:
-  - czy szybki spam strzałów jest czytelny
-  - czy niski DMG nie jest zbyt karzący
-- Lemon:
-  - czy magnetyczne prowadzenie daje kontrolę przestrzeni
-  - czy nie robi się z tego auto-win na średnim dystansie
-- Watermelon:
-  - czy tankowatość jest odczuwalna
-  - czy wolny ruch nadal pozwala grać, a nie tylko cierpieć
-
-Ogólnie:
-
-- czy żadna postać nie dominuje na każdej mapie
-- czy małe mapy nie wzmacniają za bardzo Orange i Watermelon
-- czy otwarte mapy nie faworyzują za mocno Grape i Strawberry
-- czy zabójstwa są czytelne dzięki fatality i kill feed
-- czy muzyka zmienia klimat między spokojem i walką
+- [docs/balance.md](/home/marcin/projects/Fruit-Games/docs/balance.md)
+- [docs/playtest.md](/home/marcin/projects/Fruit-Games/docs/playtest.md)
 
 ---
 

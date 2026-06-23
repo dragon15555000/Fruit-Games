@@ -61,6 +61,22 @@ theme_override_font_sizes/font_size = 32
 text = "Player X now choosing"
 horizontal_alignment = 1
 
+[node name="CharacterInfo" type="RichTextLabel" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 52.0
+offset_right = 300.0
+offset_bottom = 128.0
+grow_horizontal = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 18
+text = "[b]Wybierz owoc[/b]\nKażdy ma inny styl gry."
+
 [node name="Strawberry2" type="Button" parent="."]
 layout_mode = 1
 anchors_preset = 4

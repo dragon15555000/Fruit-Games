@@ -1,6 +1,7 @@
 extends Control
 
 @onready var picking_label: Label = $PickingLabel
+@onready var character_info: RichTextLabel = $CharacterInfo
 @onready var buttons = {
 	"Strawberry": $Strawberry2,
 	"Orange":     $Orange2,
@@ -53,6 +54,8 @@ func update_ui():
 			buttons[character].disabled = true
 	else:
 		picking_label.text = "Gracz %d wybiera!" % slot
+		if is_instance_valid(character_info):
+			character_info.text = _build_character_info()
 		var my_turn = _is_my_turn()
 		for character in buttons:
 			buttons[character].disabled = not Global.available_characters.has(character) or not my_turn
@@ -95,6 +98,30 @@ func _count_off_slots() -> int:
 		if Global.slot_types.get(i, "player") == "off":
 			count += 1
 	return count
+
+
+func _build_character_info() -> String:
+	var lines = ["[b]Balans postaci[/b]"]
+	var stats = {
+		"Strawberry": {"style": "Mobilny duelist", "hp": 110, "speed": 92, "dmg": 23, "fire_rate": 0.62, "range": 140},
+		"Orange": {"style": "Snajper / artyleria", "hp": 70, "speed": 88, "dmg": 66, "fire_rate": 2.2, "range": 470},
+		"Pineapple": {"style": "Melee brawler", "hp": 240, "speed": 58, "dmg": 38, "fire_rate": 0.55, "range": 72},
+		"Grape": {"style": "Szybkostrzelny spammer", "hp": 82, "speed": 118, "dmg": 11, "fire_rate": 0.12, "range": 200},
+		"Lemon": {"style": "Kontrola przestrzeni", "hp": 88, "speed": 98, "dmg": 16, "fire_rate": 0.72, "range": 260},
+		"Watermelon": {"style": "Ciężki tank", "hp": 310, "speed": 46, "dmg": 72, "fire_rate": 1.35, "range": 100},
+	}
+	for name in ["Strawberry", "Orange", "Pineapple", "Grape", "Lemon", "Watermelon"]:
+		var s = stats[name]
+		var note = ""
+		match name:
+			"Strawberry": note = "double_shot"
+			"Orange": note = "explosive"
+			"Pineapple": note = "sticky + melee"
+			"Grape": note = "shotgun"
+			"Lemon": note = "magnetic_seed + fermentation"
+			"Watermelon": note = "stone_seed + armor"
+		lines.append("%s: %s | HP %s | SPD %s | DMG %s | FR %ss | %s" % [name, s["style"], str(s["hp"]), str(s["speed"]), str(s["dmg"]), str(s["fire_rate"]), note])
+	return "\n".join(lines)
 
 
 func _on_strawberry_2_pressed():
