@@ -41,12 +41,12 @@ var last_hit_by: Dictionary = {}
 # Oryginalne staty — NIGDY nie modyfikuj tego słownika.
 # Służy jako source-of-truth przy każdym reset_all().
 const ORIGINAL_BASE_CHARACTERS: Dictionary = {
-	"Strawberry": { "hp": 120, "speed": 85,  "dmg": 25, "range": 120, "fire_rate": 0.7 },
-	"Orange":     { "hp": 60,  "speed": 95,  "dmg": 65, "range": 450, "fire_rate": 2.0 },
-	"Pineapple":  { "hp": 250, "speed": 55,  "dmg": 40, "range": 80,  "fire_rate": 0.6 },
-	"Grape":      { "hp": 90,  "speed": 110, "dmg": 10, "range": 180, "fire_rate": 0.15 },
-	"Lemon":      { "hp": 80,  "speed": 90,  "dmg": 15, "range": 300, "fire_rate": 0.8 },
-	"Watermelon": { "hp": 300, "speed": 40,  "dmg": 70, "range": 90,  "fire_rate": 1.5 },
+	"Strawberry": { "hp": 110, "speed": 92,  "dmg": 23, "range": 140, "fire_rate": 0.62 },
+	"Orange":     { "hp": 70,  "speed": 88,  "dmg": 66, "range": 470, "fire_rate": 2.2 },
+	"Pineapple":  { "hp": 240, "speed": 58,  "dmg": 38, "range": 72,  "fire_rate": 0.55 },
+	"Grape":      { "hp": 82,  "speed": 118, "dmg": 11, "range": 200, "fire_rate": 0.12 },
+	"Lemon":      { "hp": 88,  "speed": 98,  "dmg": 16, "range": 260, "fire_rate": 0.72 },
+	"Watermelon": { "hp": 310, "speed": 46,  "dmg": 72, "range": 100, "fire_rate": 1.35 },
 }
 
 # Kopia robocza — może być modyfikowana przez mody (thick_skin, seed_collector itp.)
@@ -199,6 +199,18 @@ func reset_all() -> void:
 		if not modifiers.has(ch): modifiers[ch] = []
 		
 		# Wbudowane modyfikatory postaci
+		if ch == "Strawberry" and not "double_shot" in modifiers[ch]:
+			modifiers[ch].append("double_shot")
+		if ch == "Orange" and not "explosive" in modifiers[ch]:
+			modifiers[ch].append("explosive")
+		if ch == "Pineapple" and not "sticky" in modifiers[ch]:
+			modifiers[ch].append("sticky")
+		if ch == "Grape" and not "shotgun" in modifiers[ch]:
+			modifiers[ch].append("shotgun")
+		if ch == "Lemon" and not "magnetic_seed" in modifiers[ch]:
+			modifiers[ch].append("magnetic_seed")
+		if ch == "Watermelon" and not "stone_seed" in modifiers[ch]:
+			modifiers[ch].append("stone_seed")
 		if ch == "Lemon" and not "fermentation" in modifiers[ch]:
 			modifiers[ch].append("fermentation")
 		if ch == "Watermelon" and not "armor" in modifiers[ch]:

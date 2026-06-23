@@ -27,16 +27,24 @@ Gracze walczą na arenie w systemie FFA. Ostatni żywy zdobywa punkty. Przegrani
 
 ## Postacie
 
-| Postać | HP | Speed | DMG | Fire Rate | Typ |
-|--------|-----|-------|-----|-----------|-----|
-| Strawberry | 100 | 80 | 25 | 0.8 s | Ranged |
-| Orange | 50 | 90 | 50 | 2.5 s | Ranged — mało HP, duży DMG |
-| Pineapple | 200 | 60 | 30 | 0.5 s | **Melee** — cios obszarowy |
-| Grape | 80 | 100 | 15 | 0.2 s | Ranged — szybkostrzelny |
-| Lemon | 90 | 85 | 20 | 0.6 s | Ranged |
-| Watermelon | 150 | 65 | 35 | 1.2 s | Ranged — tank |
+| Postać | HP | Speed | DMG | Fire Rate | Styl |
+|--------|-----|-------|-----|-----------|------|
+| Strawberry | 110 | 92 | 23 | 0.62 s | Mobilny duelist, 2-strzałowy nacisk i łatwe ustawianie pozycji |
+| Orange | 70 | 88 | 66 | 2.2 s | Snajper / artyleria z mocnym pojedynczym uderzeniem i wybuchem |
+| Pineapple | 240 | 58 | 38 | 0.55 s | Brawler melee, lepkie trafienia i walka w zwarciu |
+| Grape | 82 | 118 | 11 | 0.12 s | Szybkostrzelny spammer, najlepszy do ciągłej presji |
+| Lemon | 88 | 98 | 16 | 0.72 s | Kontroler przestrzeni, pociski z magnetycznym prowadzeniem |
+| Watermelon | 310 | 46 | 72 | 1.35 s | Ciężki tank, wolniejszy ale bardzo karzący za błąd |
 
-Pineapple nie strzela — wykonuje cios obszarowy (promień 40 px) z knockbackiem.
+Każda postać ma też wbudowany charakter:
+- Strawberry: `double_shot`
+- Orange: `explosive`
+- Pineapple: `sticky`
+- Grape: `shotgun`
+- Lemon: `magnetic_seed` i `fermentation`
+- Watermelon: `stone_seed` i `armor`
+
+Pineapple walczy w zwarciu — jego atak obszarowy działa zamiast zwykłego strzału.
 
 ---
 
