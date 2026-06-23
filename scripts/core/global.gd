@@ -36,6 +36,7 @@ var ranking:          Array = []
 var modifier_pickers: Array = []
 
 var shot_counter: Dictionary = {}
+var last_hit_by: Dictionary = {}
 
 # Oryginalne staty — NIGDY nie modyfikuj tego słownika.
 # Służy jako source-of-truth przy każdym reset_all().
@@ -187,6 +188,7 @@ func reset_all() -> void:
 	base_characters = ORIGINAL_BASE_CHARACTERS.duplicate(true)
 	characters      = ORIGINAL_BASE_CHARACTERS.duplicate(true)
 	shot_counter = {}
+	last_hit_by.clear()
 	rot_bonus.clear()
 	alive        = {}
 	var all_chars = [player1_character, player2_character, player3_character, player4_character]
@@ -268,6 +270,8 @@ func build_ranking() -> void:
 func take_damage(target: String, amount: float, reason: String = "") -> void:
 	if amount <= 0.0 or not characters.has(target): return
 	characters[target]["hp"] -= amount
+	if reason != "":
+		last_hit_by[target] = reason
 	var msg = reason + "  →  " + target + " -" + str(int(amount)) + " HP"
 	print(msg)
 	kill_feed_message.emit(msg)

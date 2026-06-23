@@ -115,8 +115,12 @@ func _physics_process(delta: float) -> void:
 	for other in get_tree().get_nodes_in_group("Bullet"):
 		if other == self or not is_instance_valid(other): continue
 		if other.get("shooter_name") == shooter_name:    continue
-		if global_position.distance_to(other.global_position) < 5.0:
-			Global.spawn_particles(global_position, Color(1.0, 0.85, 0.1), 10)
+		var hit_radius = 7.0 + velocity.length() * delta * 0.35
+		if global_position.distance_to(other.global_position) < hit_radius:
+			Global.spawn_particles(global_position, Color(1.0, 0.85, 0.1), 14)
+			Global.spawn_particles(other.global_position, Color(1.0, 0.7, 0.1), 10)
+			if Global.main_game:
+				Global.main_game.add_shake(4.0)
 			other.call_deferred("queue_free")
 			call_deferred("queue_free")
 			return
@@ -160,6 +164,18 @@ func _on_body_entered(body: Node2D) -> void:
 
 		call_deferred("queue_free")
 
+		return
+
+	if body.is_in_group("Bullet"):
+		if body == self or not is_instance_valid(body):
+			return
+		if body.get("shooter_name") == shooter_name:
+			return
+		Global.spawn_particles(global_position, Color(1.0, 0.85, 0.1), 14)
+		if Global.main_game:
+			Global.main_game.add_shake(3.0)
+		body.call_deferred("queue_free")
+		call_deferred("queue_free")
 		return
 
 	if not is_instance_valid(body): return

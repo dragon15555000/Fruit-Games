@@ -200,12 +200,78 @@ func die() -> void:
 	AudioManager.play_sound("death")
 	if Global.main_game:
 		Global.main_game.add_shake(15.0)
-	Global.spawn_particles(global_position, Color(0.5, 0, 0), 20)
+	var killer_reason: String = Global.last_hit_by.get(character_name, "")
+	var killer_name: String = ""
+	if killer_reason.contains("od "):
+		killer_name = killer_reason.get_slice("od ", 1)
+	var death_fx = _get_fatality_fx(killer_name)
+	Global.spawn_particles(global_position, death_fx["color"], int(death_fx["amount"]))
+	if Global.main_game:
+		_spawn_fatality_burst(death_fx["color"], killer_name)
+	if killer_name != "":
+		Global.kill_feed_message.emit("☠️ " + character_name + " został wykończony przez " + killer_name)
 
 	Global.alive[character_name] = false
 	Global.death_order.append(character_name)
 
 	queue_free()
+
+
+func _get_fatality_fx(killer_name: String) -> Dictionary:
+	var target_fx = {
+		"Strawberry": {"color": Color(0.95, 0.15, 0.2), "amount": 20, "burst": Color(1.0, 0.55, 0.15)},
+		"Orange": {"color": Color(1.0, 0.55, 0.1), "amount": 18, "burst": Color(1.0, 0.85, 0.2)},
+		"Pineapple": {"color": Color(0.85, 0.75, 0.15), "amount": 26, "burst": Color(0.55, 1.0, 0.25)},
+		"Grape": {"color": Color(0.55, 0.2, 0.75), "amount": 19, "burst": Color(0.75, 0.3, 1.0)},
+		"Lemon": {"color": Color(0.95, 0.95, 0.25), "amount": 17, "burst": Color(0.7, 1.0, 0.15)},
+		"Watermelon": {"color": Color(0.15, 0.75, 0.25), "amount": 28, "burst": Color(1.0, 0.2, 0.4)},
+	}
+	var killer_fx = {
+		"Strawberry": Color(1.0, 0.3, 0.3),
+		"Orange": Color(1.0, 0.55, 0.15),
+		"Pineapple": Color(1.0, 0.95, 0.2),
+		"Grape": Color(0.7, 0.3, 1.0),
+		"Lemon": Color(1.0, 1.0, 0.4),
+		"Watermelon": Color(0.95, 0.25, 0.35),
+	}
+	var fx = target_fx.get(character_name, {"color": Color(0.5, 0, 0), "amount": 20, "burst": Color(1.0, 0.4, 0.15)})
+	if killer_fx.has(killer_name):
+		fx["burst"] = killer_fx[killer_name]
+	return fx
+
+
+func _spawn_fatality_burst(color: Color, killer_name: String) -> void:
+	if not Global.main_game:
+		return
+	var burst = CPUParticles2D.new()
+	burst.position = global_position
+	burst.one_shot = true
+	burst.emitting = true
+	burst.amount = 14
+	burst.lifetime = 0.45
+	burst.spread = 120.0
+	burst.gravity = Vector2(0, 220)
+	burst.initial_velocity_min = 160
+	burst.initial_velocity_max = 280
+	burst.scale_amount_min = 2.0
+	burst.scale_amount_max = 4.0
+	burst.color = color.lightened(0.2)
+	Global.main_game.add_child(burst)
+	if killer_name != "":
+		var ring = CPUParticles2D.new()
+		ring.position = global_position
+		ring.one_shot = true
+		ring.emitting = true
+		ring.amount = 10
+		ring.lifetime = 0.35
+		ring.spread = 360.0
+		ring.gravity = Vector2.ZERO
+		ring.initial_velocity_min = 90
+		ring.initial_velocity_max = 120
+		ring.scale_amount_min = 1.5
+		ring.scale_amount_max = 3.0
+		ring.color = color
+		Global.main_game.add_child(ring)
 
 
 # ─────────────────────────────────────────────
