@@ -280,7 +280,9 @@ func build_ranking() -> void:
 
 func take_damage(target: String, amount: float, reason: String = "") -> void:
 	if amount <= 0.0 or not characters.has(target): return
+	if not alive.get(target, false): return # Postać już martwa - ignoruj
 	characters[target]["hp"] -= amount
+
 	if reason != "":
 		last_hit_by[target] = reason
 	var msg = reason + "  →  " + target + " -" + str(int(amount)) + " HP"

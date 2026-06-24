@@ -72,7 +72,6 @@ func _ready() -> void:
 	_spawn_player(Global.player4_character, spawns[3], "p4")
 
 	AudioManager.play_bgm()
-	$Gnicie.start()
 
 	# HUD
 	var hud_scene = preload("res://scenes/ui/hud.tscn")
@@ -285,10 +284,6 @@ func _do_spawn_bullet(pos: Vector2, dir: Vector2, player_prefix: String) -> void
 		extra.setup(pos, extra_dir, char_name)
 
 
-func _on_gnicie_timeout() -> void:
-	_end_round("")
-
-
 var shake_amount: float = 0.0
 
 func add_shake(amount: float) -> void:
@@ -318,7 +313,7 @@ func _physics_process(delta: float) -> void:
 			if char_name == "" or not Global.alive.get(char_name, false):
 				continue
 			if player.position.y + 8.0 > juice_y:
-				Global.take_damage(char_name, 40.0 * delta, "🍹 Sok owocowy")
+				player.apply_damage(40.0 * delta, "🍹 Sok owocowy")
 
 	if _ending_round:
 		return
@@ -341,9 +336,6 @@ func _end_round(winning_character: String) -> void:
 	_ending_round     = true
 	Global.round_over = true
 	Global.winner     = winning_character
-
-	if has_node("Gnicie"):
-		$Gnicie.stop()
 
 	Global.build_ranking()
 	Global.assign_points()

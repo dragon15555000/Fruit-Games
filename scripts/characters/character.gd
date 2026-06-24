@@ -201,6 +201,18 @@ func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
 
 	return dmg
 
+
+## Publiczny wrapper do nakładania obrażeń — zapewnia przejście przez receive_damage
+func apply_damage(raw_dmg: float, reason: String = "") -> void:
+	var attacker_name = reason
+	if reason.contains("od "):
+		attacker_name = reason.get_slice("od ", 1)
+	
+	var actual = receive_damage(raw_dmg, attacker_name)
+	if actual > 0.0:
+		Global.take_damage(character_name, actual, reason)
+
+
 ## Śmierć — wywołaj tylko przez tę funkcję, nigdy queue_free() bezpośrednio.
 func die() -> void:
 	if _is_dying:
