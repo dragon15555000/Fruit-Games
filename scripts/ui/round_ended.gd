@@ -9,9 +9,15 @@ func _ready() -> void:
 	else:
 		winner_label.text = "Wygrał: " + Global.winner
 
-	var points_text = "Punkty:\n"
+	var sorted_points = []
 	for character in Global.points:
-		points_text += character + ": " + str(Global.points[character]) + " pkt\n"
+		sorted_points.append({"name": character, "score": Global.points[character]})
+	
+	sorted_points.sort_custom(func(a, b): return a.score > b.score)
+
+	var points_text = "Ranking:\n"
+	for entry in sorted_points:
+		points_text += entry.name + ": " + str(entry.score) + " pkt\n"
 	points_label.text = points_text
 
 	# W trybie sieciowym tylko serwer może kontynuować

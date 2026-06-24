@@ -113,7 +113,22 @@ func _is_bot_picker(char_name: String) -> bool:
 	return false
 
 func _bot_auto_pick() -> void:
-	pick(randi() % current_cards.size())
+	var picker: String = pickers[current_picker_index]
+	var hp_cur  = float(Global.characters.get(picker, {}).get("hp", 100))
+	var hp_max  = float(Global.base_characters.get(picker, {}).get("hp", 100))
+	var hp_pct  = hp_cur / hp_max if hp_max > 0.0 else 1.0
+
+	# Przy niskim HP preferuj obronę, przy pełnym — atak
+	var preferred_category: String = "defense" if hp_pct < 0.4 else "projectile"
+
+	var best_index: int = -1
+	for i in range(current_cards.size()):
+		var cat = Global.modifier_registry.get(current_cards[i], {}).get("category", "")
+		if cat == preferred_category:
+			best_index = i
+			break
+
+	pick(best_index if best_index >= 0 else randi() % current_cards.size())
 
 func _on_card_1_pressed() -> void: AudioManager.play_ui_click(); pick(0)
 func _on_card_2_pressed() -> void: AudioManager.play_ui_click(); pick(1)

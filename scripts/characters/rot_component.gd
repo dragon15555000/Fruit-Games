@@ -44,4 +44,8 @@ func _physics_process(delta: float) -> void:
 			_bar_fill.bg_color = Color(1.0, t * 2.0 * 0.8, 0.2)
 
 	if rot_time_remaining <= 0.0:
-		Global.take_damage(_char_name, 9999.0, "🦠 Zgnilizna")
+		if parent.has_method("apply_damage"):
+			parent.apply_damage(9999.0, "🦠 Zgnilizna")
+		else:
+			Global.take_damage(_char_name, 9999.0, "🦠 Zgnilizna")
+

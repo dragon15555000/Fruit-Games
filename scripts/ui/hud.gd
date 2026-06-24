@@ -8,11 +8,43 @@ extends CanvasLayer
 var debug_label: RichTextLabel
 
 var labels: Array
+var bars: Array = []
 
 func _ready() -> void:
 	labels = [p1_label, p2_label, p3_label, p4_label]
+	bars = [
+		get_node_or_null("Control/Margin/Grid/P1Bar"),
+		get_node_or_null("Control/Margin/Grid/P2Bar"),
+		get_node_or_null("Control/Margin/Grid/P3Bar"),
+		get_node_or_null("Control/Margin/Grid/P4Bar")
+	]
+	_style_bars()
 	_setup_debug_overlay()
 	update_hud()
+
+func _style_bars() -> void:
+	var sb_bg = StyleBoxFlat.new()
+	sb_bg.bg_color = Color(0.15, 0.15, 0.15, 0.6)
+	sb_bg.set_corner_radius_all(4)
+	sb_bg.expand_margin_left = 1
+	sb_bg.expand_margin_right = 1
+	sb_bg.expand_margin_top = 1
+	sb_bg.expand_margin_bottom = 1
+	
+	var sb_fg = StyleBoxFlat.new()
+	sb_fg.bg_color = Color(1, 1, 1, 1)
+	sb_fg.set_corner_radius_all(3)
+	sb_fg.border_width_left = 1
+	sb_fg.border_width_right = 1
+	sb_fg.border_width_top = 1
+	sb_fg.border_width_bottom = 1
+	sb_fg.border_color = Color(1, 1, 1, 0.3)
+	
+	for bar in bars:
+		if bar:
+			bar.add_theme_stylebox_override("background", sb_bg)
+			bar.add_theme_stylebox_override("fill", sb_fg)
+			bar.custom_minimum_size.y = 10
 
 func _process(_delta: float) -> void:
 	# Częsta aktualizacja na wypadek zmian HP / modów
@@ -32,18 +64,52 @@ func update_hud() -> void:
 			3: char_name = Global.player4_character
 			
 		var lbl = labels[i]
+		var bar = bars[i] if i < bars.size() else null
+		
 		if char_name == "" or Global.slot_types.get(i+1, "off") == "off":
 			lbl.text = ""
+			if bar: bar.visible = false
 			continue
 			
+		var hp = Global.characters.get(char_name, {}).get("hp", 0)
+		var is_alive = Global.alive.get(char_name, false)
+		
+		# Ostrzeżenie gnicia - odczyt z postaci w grupie Players
+		var is_rot_critical = false
+		var char_node = null
+		for p in get_tree().get_nodes_in_group("Players"):
+			if p.get("character_name") == char_name:
+				char_node = p
+				break
+		
+		if char_node and is_alive:
+			var rot_time = char_node.get("rot_time_remaining")
+			if rot_time != null and rot_time < 30.0:
+				is_rot_critical = true
+
+		# Aktualizacja paska
+		if bar:
+			bar.visible = is_alive
+			if is_alive:
+				bar.max_value = 100 # Bazowe HP
+				bar.value = hp
+				if is_rot_critical:
+					bar.modulate = Color(0.8, 0.4, 1.0) # Fioletowy
+				else:
+					bar.modulate = Color(1.0, 1.0, 1.0)
+
+		# Budowa tekstu
 		var txt = "[b]" + prefix.to_upper() + ": " + char_name + "[/b]\n"
 		
-		# Życie
-		if Global.alive.get(char_name, false):
-			var hp = Global.characters.get(char_name, {}).get("hp", 0)
-			txt += "HP: " + str(int(hp)) + "\n"
+		if is_alive:
+			if is_rot_critical:
+				var blink = (Time.get_ticks_msec() / 200) % 2 == 0
+				var color_code = "#cc33ff" if blink else "#ffffff"
+				txt += "[color=" + color_code + "][b]HP: " + str(int(hp)) + " (GNICIE!)[/b][/color]\n"
+			else:
+				txt += "HP: " + str(int(hp)) + "\n"
 		else:
-			txt += "[color=red]MARTWY[/color]\n"
+			txt += "[color=red][b]MARTWY[/b][/color]\n"
 			
 		# Punkty (Kille)
 		var pts = Global.points.get(char_name, 0)

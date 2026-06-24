@@ -29,6 +29,7 @@ var magnetic_after_bounce: bool  = false
 var magnetic_timer:        float = 0.0
 const MAGNETIC_RANGE:      float = 200.0
 var bullet_speed:          float = 180.0
+var _magnetic_target:      Node2D = null
 
 # ── Dojrzały strzał — TYLKO jeśli gracz wybrał mod "ripe_shot" ───────────────
 var ripe_shot_bonus: bool = false
@@ -46,8 +47,8 @@ func setup(pos: Vector2, dir: Vector2, p_shooter_name: String) -> void:
 
 	var mods = Global.modifiers.get(shooter_name, [])
 
-	# Prędkość — sniper_seed zwiększa o 25%
-	bullet_speed = 130.0
+	# Prędkość — sniper_seed zwiększa o 25%. Dodajemy +/- 5% losowości dla naturalności.
+	bullet_speed = 130.0 * (1.0 + randf_range(-0.05, 0.05))
 	if mods.has("sniper_seed"):
 		bullet_speed *= 1.25
 
@@ -94,13 +95,20 @@ func _physics_process(delta: float) -> void:
 
 	# Magnetyczna pestka — ciągłe skręcanie w stronę najbliższego wroga
 	if is_magnetic:
-		_apply_homing(delta)
+		# Optymalizacja: szukaj celu tylko raz na 5 klatek
+		if Engine.get_physics_frames() % 5 == 0:
+			_apply_homing(delta)
+		else:
+			_apply_homing_continuous(delta)
 
 	# Magnetyczne odbicie — homing aktywny przez 2 sekundy po odbiciu
 	if magnetic_after_bounce and has_bounced:
 		magnetic_timer += delta
 		if magnetic_timer < 2.0:
-			_apply_homing(delta)
+			if Engine.get_physics_frames() % 5 == 0:
+				_apply_homing(delta)
+			else:
+				_apply_homing_continuous(delta)
 
 	velocity.y += GRAVITY * delta
 	position   += velocity * delta
@@ -226,14 +234,26 @@ func _apply_homing(delta: float) -> void:
 	for node in get_tree().get_nodes_in_group("Players"):
 		if not is_instance_valid(node): continue
 		if node.get("character_name") == shooter_name: continue
+		if not Global.alive.get(node.get("character_name"), false): continue
+		
 		var d = global_position.distance_to(node.global_position)
 		if d < nearest_dist:
 			nearest_dist = d
 			nearest      = node
 
-	if nearest:
-		var desired = (nearest.global_position - global_position).normalized() * bullet_speed
-		velocity    = velocity.lerp(desired, delta * 4.0)
+	_magnetic_target = nearest
+	_apply_homing_continuous(delta)
+
+func _apply_homing_continuous(delta: float) -> void:
+	if is_instance_valid(_magnetic_target) and Global.alive.get(_magnetic_target.get("character_name"), false):
+		var d = global_position.distance_to(_magnetic_target.global_position)
+		if d <= MAGNETIC_RANGE * 1.5: # Zwiększony zasięg śledzenia gdy już złapie cel
+			var desired = (_magnetic_target.global_position - global_position).normalized() * bullet_speed
+			velocity    = velocity.lerp(desired, delta * 4.0)
+		else:
+			_magnetic_target = null
+	else:
+		_magnetic_target = null
 
 func _find_shooter() -> Node:
 	for node in get_tree().get_nodes_in_group("Players"):

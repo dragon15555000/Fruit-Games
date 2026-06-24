@@ -12,10 +12,14 @@ func _ready() -> void:
 func _on_message(text: String) -> void:
 	if not is_instance_valid(self):
 		return
-	var label = Label.new()
+	var label = RichTextLabel.new()
+	label.bbcode_enabled = true
 	label.text = text
-	label.add_theme_font_size_override("font_size", 12)
-	label.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
+	label.fit_content = true
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("normal_font_size", 12)
+	label.add_theme_color_override("default_color", Color(1, 1, 1, 0.9))
 	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)

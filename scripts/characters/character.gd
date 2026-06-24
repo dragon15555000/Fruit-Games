@@ -95,6 +95,7 @@ var rot_time_remaining: float:
 
 # ── Fizyka ────────────────────────────────────────────────────────────────────
 var coyote_time_activated: bool  = false
+var _double_jump_used: bool      = false
 const JUMP_HEIGHT:  float = -270.0
 var   gravity:      float = 15.0
 const MAX_GRAVITY:  float = 20.0
@@ -118,7 +119,7 @@ func _ready() -> void:
 
 	# Wszystkie komponenty muszą istnieć PRZED apply_on_ready —
 	# mody piszą przez proxy settery chronione przez if _modifier_state / if _rot_component.
-	# Antirot robi rot_time_remaining += 5.0, więc RotComponent musi być gotowy.
+	# Antirot robi rot_time_remaining += 5.0, connectivity_check RotComponent musi być gotowy.
 
 	# ModifierState — przed RotComponent żeby preservative_timer był gotowy
 	_modifier_state = preload("res://scripts/characters/modifier_state.gd").new()
@@ -187,11 +188,15 @@ func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
 
 	var dmg = ModifierSystem.apply_on_receive(character_name, raw_dmg, attacker_name)
 	if dmg <= 0.0:
+		Global.spawn_damage_text(global_position + Vector2(0, -20), "BLOCK", Color(0.6, 0.8, 1.0))
 		return 0.0
 
 	AudioManager.play_sound("hit")
-	Global.spawn_particles(global_position, Color(1, 0, 0), 5)
+	Global.spawn_hit_particles(global_position, character_name)
+	Global.spawn_damage_text(global_position + Vector2(0, -20), str(int(dmg)), Color(1.0, 0.3, 0.3))
 	_refresh_hp_scaled_state()
+	if _visuals:
+		_visuals.trigger_hit_flash()
 
 	# Sprawdź czy cios byłby śmiertelny
 	var cur_hp = float(Global.characters[character_name]["hp"])
@@ -201,6 +206,18 @@ func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
 
 	return dmg
 
+
+## Publiczny wrapper do nakładania obrażeń — zapewnia przejście przez receive_damage
+func apply_damage(raw_dmg: float, reason: String = "") -> void:
+	var attacker_name = reason
+	if reason.contains("od "):
+		attacker_name = reason.get_slice("od ", 1)
+	
+	var actual = receive_damage(raw_dmg, attacker_name)
+	if actual > 0.0:
+		Global.take_damage(character_name, actual, reason)
+
+
 ## Śmierć — wywołaj tylko przez tę funkcję, nigdy queue_free() bezpośrednio.
 func die() -> void:
 	if _is_dying:
@@ -208,14 +225,18 @@ func die() -> void:
 	_is_dying = true
 
 	AudioManager.play_sound("death")
+	AudioManager.play_sound("melee", 0.5, 4.0) # Basowe pierdnięcie śmierci
 	if Global.main_game:
 		Global.main_game.add_shake(15.0)
+	
+	Global.spawn_death_particles(global_position, character_name)
+	
 	var killer_reason: String = Global.last_hit_by.get(character_name, "")
 	var killer_name: String = ""
 	if killer_reason.contains("od "):
 		killer_name = killer_reason.get_slice("od ", 1)
 	var death_fx = _get_fatality_fx(character_name, killer_name)
-	Global.spawn_particles(global_position, death_fx["color"], int(death_fx["amount"]))
+	
 	if Global.main_game:
 		_spawn_fatality_burst(death_fx["burst"], death_fx["color"], killer_name)
 	if killer_name != "":
@@ -224,43 +245,64 @@ func die() -> void:
 	Global.alive[character_name] = false
 	Global.death_order.append(character_name)
 
-	queue_free()
+	# Animacja śmierci - "pop and fade"
+	if is_instance_valid(_visuals) and is_instance_valid(fruit_sprite):
+		# Wyłącz kolizje
+		set_collision_layer_value(1, false)
+		set_collision_mask_value(1, false)
+		velocity = Vector2.ZERO
+		
+		var tween = create_tween().set_parallel(true)
+		# Skok skali (pop)
+		tween.tween_property(fruit_sprite, "scale", fruit_sprite.scale * 1.5, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		# Zanik (fade) i powrót skali
+		tween.chain().set_parallel(true)
+		tween.tween_property(fruit_sprite, "scale", Vector2.ZERO, 0.35).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_IN)
+		tween.tween_property(fruit_sprite, "modulate:a", 0.0, 0.35)
+		
+		# Ukryj pasek zdrowia i etykietę
+		if is_instance_valid(health_bar):
+			tween.tween_property(health_bar, "modulate:a", 0.0, 0.2)
+		
+		tween.chain().tween_callback(queue_free)
+	else:
+		queue_free()
 
 
 func _get_fatality_fx(target_name: String, killer_name: String) -> Dictionary:
 	var pair_fx = {
 		"Strawberry|Pineapple": {
-			"label": "🍍 " + target_name + " został rozgnieciony przez " + killer_name,
+			"label": "[b]🍍 " + target_name + " zmiażdżony przez " + killer_name + "![/b]",
 			"color": Color(1.0, 0.35, 0.18),
 			"burst": Color(1.0, 0.9, 0.25),
 			"amount": 36
 		},
 		"Pineapple|Watermelon": {
-			"label": "💥 " + target_name + " eksplodował pod ciosem " + killer_name,
+			"label": "[b]💥 " + target_name + " eksplodował po ciosie " + killer_name + "![/b]",
 			"color": Color(0.95, 0.55, 0.15),
 			"burst": Color(0.25, 0.9, 0.55),
 			"amount": 42
 		},
 		"Watermelon|Orange": {
-			"label": "🍊 " + target_name + " rozsypał się od precyzyjnego strzału " + killer_name,
+			"label": "[b]🍊 " + target_name + " rozerwany precyzją " + killer_name + "![/b]",
 			"color": Color(1.0, 0.2, 0.45),
 			"burst": Color(1.0, 0.75, 0.1),
 			"amount": 30
 		},
 		"Grape|Lemon": {
-			"label": "🍋 " + target_name + " pękł w kwaśnym rozbłysku po trafieniu " + killer_name,
+			"label": "[b]🍋 " + target_name + " pękł w kwaśnym soku " + killer_name + "![/b]",
 			"color": Color(0.65, 0.25, 0.85),
 			"burst": Color(1.0, 1.0, 0.25),
 			"amount": 28
 		},
 		"Lemon|Strawberry": {
-			"label": "🍓 " + target_name + " został rozszarpany przez " + killer_name,
+			"label": "[b]🍓 " + target_name + " wyciśnięty do zera przez " + killer_name + "![/b]",
 			"color": Color(1.0, 0.95, 0.2),
 			"burst": Color(1.0, 0.35, 0.35),
 			"amount": 26
 		},
 		"Orange|Grape": {
-			"label": "🍇 " + target_name + " zniknął w fioletowym wybuchu po strzale " + killer_name,
+			"label": "[b]🍇 " + target_name + " zniknął w fioletowej mgle " + killer_name + "![/b]",
 			"color": Color(1.0, 0.55, 0.1),
 			"burst": Color(0.7, 0.3, 1.0),
 			"amount": 24
@@ -335,6 +377,8 @@ func _physics_process(delta: float) -> void:
 
 	health_bar.value = Global.characters[character_name]["hp"]
 	_refresh_hp_scaled_state()
+	if _visuals:
+		_visuals.set_rot_active(rot_time_remaining < 30.0)
 
 	# Mody pasywne
 	ModifierSystem.apply_passive(character_name, delta, self)
@@ -351,6 +395,7 @@ func _physics_process(delta: float) -> void:
 	# Grawitacja i coyote time
 	if is_on_floor():
 		coyote_time_activated = false
+		_double_jump_used = false
 		gravity = lerp(gravity, 12.0, 12.0 * delta)
 		_last_floor_y = global_position.y
 	else:
@@ -370,6 +415,13 @@ func _physics_process(delta: float) -> void:
 		JumpBufferTimer.stop()
 		CoyoteTimer.stop()
 		coyote_time_activated = true
+		AudioManager.play_sound("jump")
+
+	# Double jump — tylko Cherry, jeden raz w powietrzu
+	if character_name == "Cherry" and not is_on_floor() and not _double_jump_used \
+	   and action_jump != "" and Input.is_action_just_pressed(action_jump):
+		velocity.y = JUMP_HEIGHT
+		_double_jump_used = true
 		AudioManager.play_sound("jump")
 
 	# Head nudge — pozwala wejść pod niskie platformy

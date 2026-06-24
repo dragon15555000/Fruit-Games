@@ -10,6 +10,9 @@ extends Control
 	"Grape":      $Grape2,
 	"Lemon":      $Lemon2,
 	"Watermelon": $Watermelon2,
+	"Banana":     $Banana2,
+	"Cherry":     $Cherry2,
+	"Coconut":    $Coconut2,
 }
 
 const DEFAULT_INFO_TEXT := "[b]Wybierz owoc[/b]\nNajedź myszą na postać, aby zobaczyć jej styl gry."
@@ -118,7 +121,7 @@ func _bind_preview_signals() -> void:
 		var button = buttons[character_name]
 		if not is_instance_valid(button):
 			continue
-		var preview_name := character_name
+		var preview_name: String = character_name
 		button.mouse_entered.connect(func() -> void:
 			_on_character_hover_start(preview_name)
 		)
@@ -281,6 +284,18 @@ func _on_lemon_2_pressed():
 func _on_watermelon_2_pressed():
 	AudioManager.play_ui_click()
 	pick("Watermelon")
+
+func _on_banana_2_pressed():
+	AudioManager.play_ui_click()
+	pick("Banana")
+
+func _on_cherry_2_pressed():
+	AudioManager.play_ui_click()
+	pick("Cherry")
+
+func _on_coconut_2_pressed():
+	AudioManager.play_ui_click()
+	pick("Coconut")
 
 func pick(character_name: String):
 	if Global.is_network_game:

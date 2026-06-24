@@ -1,0 +1,68 @@
+[gd_scene load_steps=4 format=3 uid="uid://coconutchar"]
+
+[ext_resource type="Script" path="res://scripts/characters/character.gd" id="1_iqrn4"]
+[ext_resource type="Script" path="res://scripts/characters/fruit_drawer.gd" id="2_fruit"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_coconut"]
+size = Vector2(22, 22)
+
+[node name="Coconut" type="CharacterBody2D" groups=["Players", "coconut"]]
+script = ExtResource("1_iqrn4")
+character_name = "Coconut"
+
+[node name="FruitSprite" type="Node2D" parent="."]
+script = ExtResource("2_fruit")
+fruit_type = "Coconut"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_coconut")
+
+[node name="JumpBufferTimer" type="Timer" parent="."]
+wait_time = 0.12
+one_shot = true
+
+[node name="Coyote" type="Timer" parent="."]
+wait_time = 0.1
+one_shot = true
+
+[node name="Left_HeadNudge" type="RayCast2D" parent="."]
+position = Vector2(-9, -9)
+target_position = Vector2(0, -2)
+
+[node name="Left_Head_Nudge2" type="RayCast2D" parent="."]
+position = Vector2(-7, -9)
+target_position = Vector2(0, -2)
+
+[node name="Right_Head_Nudge3" type="RayCast2D" parent="."]
+position = Vector2(9, -9)
+target_position = Vector2(0, -2)
+
+[node name="Right_Head_Nudge4" type="RayCast2D" parent="."]
+position = Vector2(7, -9)
+target_position = Vector2(0, -2)
+
+[node name="RayCast2D" type="RayCast2D" parent="."]
+position = Vector2(9, 7)
+target_position = Vector2(2, 0)
+
+[node name="RayCast2D2" type="RayCast2D" parent="."]
+position = Vector2(9, 3)
+target_position = Vector2(2, 0)
+
+[node name="RayCast2D3" type="RayCast2D" parent="."]
+position = Vector2(-9, 7)
+target_position = Vector2(-2, 0)
+
+[node name="RayCast2D4" type="RayCast2D" parent="."]
+position = Vector2(-9, 3)
+target_position = Vector2(-2, 0)
+
+[node name="ReloadTime" type="Timer" parent="."]
+one_shot = true
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+offset_left = -10.0
+offset_top = -17.0
+offset_right = 10.0
+offset_bottom = -13.0
+show_percentage = false

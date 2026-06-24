@@ -4,6 +4,8 @@ extends Area2D
 var shooter_name: String = ""
 
 func _ready() -> void:
+	AudioManager.play_sound("shoot", 1.8, -10.0)
+	AudioManager.play_sound("melee", 0.6, 6.0) # Potężny wybuch
 	# Czekamy jedną klatkę fizyki żeby Area2D zdążyła zarejestrować nakładające się ciała.
 	await get_tree().physics_frame
 
@@ -41,5 +43,8 @@ func _ready() -> void:
 		var actual = body.receive_damage(dmg, shooter_name)
 		if actual > 0.0:
 			Global.take_damage(target_name, actual, "💥 Eksplozja od " + shooter_name)
+			# Mody on_hit dla eksplozji
+			if is_instance_valid(body) and Global.alive.get(target_name, false):
+				ModifierSystem.apply_on_hit(shooter_name, body, global_position, actual)
 
 	queue_free()

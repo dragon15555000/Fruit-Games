@@ -1,31 +1,28 @@
 # Fruit Game
 
-**2D arena shooter** w Godot 4.3 — do 4 graczy lokalnie lub vs boty.
+Lokalna gra dla 2–4 graczy (lub vs boty) zrobiona w Godot 4.3. Arena FFA, ostatni żywy zbiera punkty.
 
-> Wersja: **1.0** | Silnik: Godot 4.3 | Licencja: MIT
-
----
-
-## Rozgrywka
-
-Gracze walczą na arenie w systemie FFA. Ostatni żywy zdobywa punkty. Przegrani wybierają modyfikatory między rundami (mechanika anti-snowball). Co 5 rund wyświetlane jest podsumowanie setu.
-
-- **Runda** — walka na arenie, ostatni żywy wygrywa
-- **Modyfikatory** — przegrani losują 3 karty ulepszenia, wybierają 1
-- **Set** — co 5 rund podsumowanie rankingu
-
-### Punktacja
-
-| Miejsce | Punkty |
-|---------|--------|
-| 1. | 3 |
-| 2. | 2 |
-| 3. | 1 |
-| 4. | 0 |
+*Local multiplayer arena brawler for 2–4 players (or vs bots), built in Godot 4.3. FFA — last one standing scores.*
 
 ---
 
-## Postacie
+## Rozgrywka / Gameplay
+
+Gracze wybierają jedną z 6 postaci (Strawberry, Orange, Pineapple, Grape, Lemon, Watermelon) i walczą na arenie. Pineapple jest melee, reszta strzelają pociskami. Każda postać ma inne statystyki i inny typ pocisku.
+
+Po każdej rundzie przegrani losują 3 karty modyfikatorów i wybierają jedną — zwycięzca nie dostaje nic. To celowy design żeby nie było snowballa. Modyfikatorów jest ok. 45 w 5 kategoriach: Projectile, Defense, Bounce, Passive/Area, Legacy.
+
+Mechanika gnicia (Rot): każdy gracz ma licznik czasu (domyślnie 120s). Jak skończy mu się czas, odpada z rundy — nie można siedzieć w miejscu i czekać. Co 5 rund podsumowanie seta.
+
+*Players pick one of 6 characters and fight on an arena. After each round, losers draw 3 modifier cards and pick one — winner gets nothing (intentional anti-snowball design). Rot mechanic: each player has a 120s timer; when it runs out they're eliminated. Every 5 rounds a set summary.*
+
+---
+
+## Uruchomienie / Running
+
+Godot 4.3, naciśnij F5. W menu głównym ustaw sloty (Gracz / Bot / Wyłączony), minimum 2 aktywne. Eksperymentalny LAN przez ENet.
+
+*Open in Godot 4.3, press F5. Set slots in the main menu (Player / Bot / Disabled), minimum 2 active. Experimental LAN via ENet.*
 
 | Postać | HP | Speed | DMG | Fire Rate | Styl |
 |--------|-----|-------|-----|-----------|------|
@@ -48,94 +45,21 @@ Pineapple walczy w zwarciu — jego atak obszarowy działa zamiast zwykłego str
 
 Szczegółowy balans i checklistę testową przeniosłem do:
 
-- [docs/balance.md](/home/marcin/projects/Fruit-Games/docs/balance.md)
-- [docs/playtest.md](/home/marcin/projects/Fruit-Games/docs/playtest.md)
+- [docs/balance.md](file:///home/marcin/projects/Fruit-Games/docs/balance.md)
+- [docs/playtest.md](file:///home/marcin/projects/Fruit-Games/docs/playtest.md)
 
 ---
 
-## Modyfikatory
-
-Pula 45 modyfikatorów podzielona na kategorie. Przegrani wybierają między rundami, boty wybierają losowo.
-
-### Projectile
-Podwójny strzał · Pestka snajpera · Fermentacja · Dojrzały strzał · Shotgun pestek · Radioaktywna pestka · Strzał zgnilizny · Magnetyczna pestka · Kolekcjoner pestek · Owocowa passa
-
-### Defense
-Gruba skórka · Soczyste wnętrze · Woskowa powłoka · Kolczasta tarcza · Twardy owoc · Antyzgnilizna · Konserwant · Drugi owoc · Zielony jeszcze · Kamienna pestka · Lustrzana skórka
-
-### Bounce
-Dodatkowe odbicie · Przyspieszające odbicie · Niszczące odbicie · Magnetyczne odbicie · Wściekłe odbicie
-
-### Passive / Area
-Dojrzały sprint · Przyspieszacz gnicia · Gnilna eksplozja · Duplikator modów
-
-### Legacy
-Odbijające pociski · Wirujące pociski · Ślad trucizny · Kradzież HP · Eksplodujące · Lepkie pociski · Pancerz · +20% prędkość
-
----
-
-## Gnicie (Rot)
-
-Każdy gracz ma **120 sekund** do zgniecia. Pasek nad postacią pokazuje czas. Mody wpływają na tempo gnicia.
-
----
-
-## Sterowanie
-
-| Gracz | Ruch | Skok | Strzał |
-|-------|------|------|--------|
-| P1 | A / D | Space | LPM |
-| P2 | ← / → | ↑ | PPM |
-| P3 | J / L | I | Środkowy myszy |
-| P4 | Numpad 4/6 | Numpad 8 | Przycisk myszy 9 |
-| Bot | — | — | automatycznie |
-
----
-
-## Tryby gry
-
-Menu główne oferuje **4 sloty**. Każdy slot to: Gracz → Bot → Wyłączony (kliknij żeby cyklować). Wymagane minimum 2 aktywne sloty.
-
----
-
-## Mapy
-
-Gra losuje mapę każdą rundę spośród 5 unikalnych aren:
-
-| Mapa | Klimat |
-|------|--------|
-| Fruit Bowl | Letni ogród, trawa, drzewa owocowe |
-| Juice Factory | Ciemna fabryka, rury, industrialne platformy |
-| Canopy | Nocny las tropikalny, gałęzie, świetliki |
-| Blender | Wnętrze blendera, szklane ściany, ostrza |
-| Watermelon Caves | Jaskinia z miąższu arbuza, pestki, stalaktyty |
-
----
-
-## Uruchomienie
-
-1. Otwórz projekt w **Godot 4.3**
-2. Naciśnij **F5**
-3. W menu ustaw sloty i kliknij Start
-
----
-
-## Struktura projektu
+## Struktura / Structure
 
 ```
-Fruit-Game/
-├── scenes/
-│   ├── characters/     # 6 postaci (.tscn)
-│   ├── bullets/        # Pociski per postać (.tscn)
-│   ├── effects/        # Eksplozje, trucizna, cios melee
-│   └── ui/             # Menu, wybór postaci, modyfikatory, wyniki, HUD
-├── scripts/
-│   ├── ai/             # Bot AI controller
-│   ├── characters/     # Logika postaci
-│   ├── core/           # Global, MainGame, ModifierSystem
-│   ├── effects/        # Eksplozje, trucizna
-│   ├── map/            # 5 map + map_base
-│   └── ui/             # Cały UI flow
-├── assets/
-└── fonts/
+scenes/    characters, bullets, effects, maps (6), ui
+scripts/   ai, characters, core (autoloads), effects, map, multiplayer, ui
+assets/    audio, sprites
 ```
+
+Autoloady: `Global`, `ModifierSystem`, `MultiplayerManager`, `AudioManager`, `SettingsManager`.
+
+---
+
+MIT License

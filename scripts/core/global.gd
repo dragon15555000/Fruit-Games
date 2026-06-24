@@ -37,6 +37,7 @@ var modifier_pickers: Array = []
 
 var shot_counter: Dictionary = {}
 var last_hit_by: Dictionary = {}
+var _damage_accumulator: Dictionary = {}
 
 # Oryginalne staty — NIGDY nie modyfikuj tego słownika.
 # Służy jako source-of-truth przy każdym reset_all().
@@ -47,6 +48,9 @@ const ORIGINAL_BASE_CHARACTERS: Dictionary = {
 	"Grape":      { "hp": 82,  "speed": 118, "dmg": 11, "range": 200, "fire_rate": 0.12 },
 	"Lemon":      { "hp": 88,  "speed": 98,  "dmg": 16, "range": 260, "fire_rate": 0.72 },
 	"Watermelon": { "hp": 310, "speed": 46,  "dmg": 72, "range": 100, "fire_rate": 1.35 },
+	"Banana":     { "hp": 100, "speed": 80,  "dmg": 22, "range": 250, "fire_rate": 0.6  },
+	"Cherry":     { "hp": 70,  "speed": 105, "dmg": 20, "range": 200, "fire_rate": 0.5  },
+	"Coconut":    { "hp": 160, "speed": 70,  "dmg": 30, "range": 150, "fire_rate": 1.0  },
 }
 
 # Kopia robocza — może być modyfikowana przez mody (thick_skin, seed_collector itp.)
@@ -63,16 +67,16 @@ var modifier_registry: Dictionary = {
 	"radioactive_seed":   { "name": "Radioaktywna pestka",    "emoji": "☢️",  "category": "projectile", "trigger": "on_hit",     "desc": "Przy trafieniu zostaje toksyczna plama na 3 sek." },
 	"rot_shot":           { "name": "Strzał zgnilizny",       "emoji": "🦠",  "category": "projectile", "trigger": "on_hit",     "desc": "Trafiony wróg gnije o 3 sek szybciej." },
 	"magnetic_seed":      { "name": "Magnetyczna pestka",     "emoji": "🧲",  "category": "projectile", "trigger": "on_shoot",   "desc": "Pocisk skręca w kierunku wroga w zasięgu 2m." },
-	"thick_skin":         { "name": "Gruba skórka",           "emoji": "🥊",  "category": "defense",    "trigger": "on_apply",   "desc": "Maksymalne HP +35." },
+	"thick_skin":         { "name": "Gruba skórka",           "emoji": "🥊",  "category": "defense",    "trigger": "on_apply",   "desc": "Maksymalne HP +25." },
 	"juicy_core":         { "name": "Soczyste wnętrze",       "emoji": "💧",  "category": "defense",    "trigger": "on_hit",     "desc": "Odzyskujesz 15% brakującego HP przy trafieniu wroga." },
 	"wax_coat":           { "name": "Woskowa powłoka",        "emoji": "🕯️",  "category": "defense",    "trigger": "on_receive", "desc": "Blokujesz pierwsze trafienie w rundzie." },
-	"thorn_shield":       { "name": "Kolczasta tarcza",       "emoji": "🌵",  "category": "defense",    "trigger": "on_receive", "desc": "Wrogowie trafiający cię dostają -5 HP." },
-	"hard_fruit":         { "name": "Twardy owoc",            "emoji": "🪨",  "category": "defense",    "trigger": "on_receive", "desc": "Redukcja wszystkich obrażeń o 15%." },
+	"thorn_shield":       { "name": "Kolczasta tarcza",       "emoji": "🌵",  "category": "defense",    "trigger": "on_receive", "desc": "Wrogowie trafiający cię dostają -3 HP." },
+	"hard_fruit":         { "name": "Twardy owoc",            "emoji": "🪨",  "category": "defense",    "trigger": "on_receive", "desc": "Redukcja wszystkich obrażeń o 10%." },
 	"antirot":            { "name": "Antyzgnilizna",          "emoji": "🧴",  "category": "defense",    "trigger": "passive",    "desc": "Gnijesz o 10 sek wolniej." },
 	"preservative":       { "name": "Konserwant",             "emoji": "🛡️",  "category": "defense",    "trigger": "on_apply",   "desc": "Przez pierwsze 15 sek rundy jesteś odporny na efekty negatywne." },
 	"second_fruit":       { "name": "Drugi owoc",             "emoji": "🍀",  "category": "defense",    "trigger": "on_lethal",  "desc": "Raz na rundę przeżywasz śmiertelny cios z 5 HP." },
 	"still_green":        { "name": "Zielony jeszcze",        "emoji": "🌿",  "category": "defense",    "trigger": "passive",    "desc": "Gdy HP < 30%, regenerujesz 1 HP co 2 sek." },
-	"stone_seed":         { "name": "Kamienna pestka",        "emoji": "🗿",  "category": "defense",    "trigger": "on_apply",   "desc": "+10 pancerza, ale -10% prędkości ruchu." },
+	"stone_seed":         { "name": "Kamienna pestka",        "emoji": "🗿",  "category": "defense",    "trigger": "on_apply",   "desc": "+8 pancerza, ale -10% prędkości ruchu." },
 	"extra_bounce":       { "name": "Dodatkowe odbicie",      "emoji": "↩️",  "category": "bounce",     "trigger": "on_shoot",   "desc": "Pocisk odbija się o +1 powierzchnię więcej." },
 	"accelerating_bounce":{ "name": "Przyspieszające odbicie","emoji": "⚡",  "category": "bounce",     "trigger": "on_bounce",  "desc": "Każde odbicie zwiększa prędkość pocisku o 10%." },
 	"destroying_bounce":  { "name": "Niszczące odbicie",      "emoji": "💢",  "category": "bounce",     "trigger": "on_bounce",  "desc": "Każde odbicie dodaje +5 DMG." },
@@ -83,7 +87,7 @@ var modifier_registry: Dictionary = {
 	"rot_accelerator":    { "name": "Przyspieszacz gnicia",   "emoji": "💀",  "category": "area",       "trigger": "passive",    "desc": "Wrogowie w twoim zasięgu gniją 15% szybciej." },
 	"rot_explosion":      { "name": "Gnilna eksplozja",       "emoji": "🌋",  "category": "defense",    "trigger": "passive",    "desc": "Gdy HP < 20%, odpychasz wrogów i leczysz 10 HP (jednorazowo)." },
 	"seed_collector":     { "name": "Kolekcjoner pestek",     "emoji": "🌰",  "category": "projectile", "trigger": "on_hit",     "desc": "Każde trafienie bez otrzymania ciosu daje +1 DMG. Reset przy ciosie." },
-	"fruit_streak":       { "name": "Owocowa passa",          "emoji": "🔥",  "category": "projectile", "trigger": "on_hit",     "desc": "3 trafienia z rzędu = następny pocisk +40% obrażeń." },
+	"fruit_streak":       { "name": "Owocowa passa",          "emoji": "🔥",  "category": "projectile", "trigger": "on_hit",     "desc": "3 trafienia z rzędu = następny pocisk +30% obrażeń." },
 	"mod_duplicator":     { "name": "Duplikator modów",       "emoji": "🔄",  "category": "passive",    "trigger": "on_apply",   "desc": "Losowy posiadany modyfikator zostaje skopiowany." },
 	"bouncy":   { "name": "Odbijające pociski", "emoji": "↩️", "category": "bounce",     "trigger": "on_shoot",   "desc": "Pociski odbijają się 4 razy." },
 	"spinning": { "name": "Wirujące pociski",   "emoji": "🌪️", "category": "projectile", "trigger": "passive",    "desc": "Pociski poruszają się sinusoidalnie." },
@@ -189,6 +193,7 @@ func reset_all() -> void:
 	characters      = ORIGINAL_BASE_CHARACTERS.duplicate(true)
 	shot_counter = {}
 	last_hit_by.clear()
+	_damage_accumulator.clear()
 	rot_bonus.clear()
 	alive        = {}
 	var all_chars = [player1_character, player2_character, player3_character, player4_character]
@@ -215,6 +220,10 @@ func reset_all() -> void:
 			modifiers[ch].append("fermentation")
 		if ch == "Watermelon" and not "armor" in modifiers[ch]:
 			modifiers[ch].append("armor")
+		if ch == "Banana" and not "ripe_sprint" in modifiers[ch]:
+			modifiers[ch].append("ripe_sprint")
+		if ch == "Coconut" and not "hard_fruit" in modifiers[ch]:
+			modifiers[ch].append("hard_fruit")
 			
 	round_over   = false
 	game_started = false
@@ -252,8 +261,7 @@ func is_set_complete() -> bool:
 	return round_number % rounds_per_set == 0
 
 func assign_points() -> void:
-	# Remis (gnicie) — nikt nie dostaje punktów
-	if Global.winner == "":
+	if winner == "":
 		return
 
 	var point_values = [3, 2, 1, 0]
@@ -281,12 +289,27 @@ func build_ranking() -> void:
 
 func take_damage(target: String, amount: float, reason: String = "") -> void:
 	if amount <= 0.0 or not characters.has(target): return
+	if not alive.get(target, false): return # Postać już martwa - ignoruj
 	characters[target]["hp"] -= amount
+
 	if reason != "":
 		last_hit_by[target] = reason
-	var msg = reason + "  →  " + target + " -" + str(int(amount)) + " HP"
-	print(msg)
-	kill_feed_message.emit(msg)
+	
+	# Akumulacja małych obrażeń dla czytelności logów
+	var key = reason + "->" + target
+	var acc = _damage_accumulator.get(key, 0.0) + amount
+	
+	if int(acc) > 0 or characters[target]["hp"] <= 0:
+		var display_dmg = int(acc) if int(acc) > 0 else 1
+		var msg = reason + " → " + target + " [color=#ff4444]-" + str(display_dmg) + " HP[/color]"
+		if characters[target]["hp"] <= 0:
+			msg = "[b][color=red]" + reason + " → " + target + " (ELIMINACJA)[/color][/b]"
+		
+		print(msg.replace("[b]", "").replace("[/b]", "").replace("[color=red]", "").replace("[color=#ff4444]", "").replace("[/color]", ""))
+		kill_feed_message.emit(msg)
+		_damage_accumulator[key] = acc - int(acc)
+	else:
+		_damage_accumulator[key] = acc
 	# W trybie sieciowym serwer synchronizuje HP do wszystkich klientów
 	if is_network_game and multiplayer.is_server():
 		_rpc_sync_hp.rpc(target, float(characters[target]["hp"]))
@@ -303,6 +326,21 @@ func rpc_reset_all() -> void:
 # _physics_process USUNIĘTY CAŁKOWICIE
 # Koniec rundy wykrywa wyłącznie main_game.gd
 
+const CHARACTER_COLORS: Dictionary = {
+	"Strawberry": Color(0.90, 0.10, 0.15),
+	"Orange":     Color(1.00, 0.55, 0.10),
+	"Pineapple":  Color(0.85, 0.70, 0.15),
+	"Grape":      Color(0.55, 0.10, 0.70),
+	"Lemon":      Color(0.98, 0.95, 0.15),
+	"Watermelon": Color(0.90, 0.20, 0.30),
+	"Banana":     Color(0.98, 0.92, 0.15),
+	"Cherry":     Color(0.85, 0.05, 0.12),
+	"Coconut":    Color(0.50, 0.33, 0.15),
+}
+
+func get_char_color(char_name: String) -> Color:
+	return CHARACTER_COLORS.get(char_name, Color(1, 0.8, 0.2))
+
 func spawn_particles(pos: Vector2, color: Color, amount: int = 15) -> void:
 	if main_game == null or not is_instance_valid(main_game): return
 	var cp = CPUParticles2D.new()
@@ -311,13 +349,74 @@ func spawn_particles(pos: Vector2, color: Color, amount: int = 15) -> void:
 	cp.one_shot = true
 	cp.explosiveness = 0.9
 	cp.amount = amount
-	cp.lifetime = 0.5
+	cp.lifetime = 0.6
 	cp.spread = 180.0
-	cp.gravity = Vector2(0, 300)
-	cp.initial_velocity_min = 100
-	cp.initial_velocity_max = 200
-	cp.scale_amount_min = 3.0
-	cp.scale_amount_max = 6.0
+	cp.gravity = Vector2(0, 280)
+	cp.initial_velocity_min = 80
+	cp.initial_velocity_max = 220
+	cp.scale_amount_min = 3.5
+	cp.scale_amount_max = 7.0
 	cp.color = color
 	main_game.add_child(cp)
-	get_tree().create_timer(1.0).timeout.connect(cp.queue_free)
+	cp.finished.connect(cp.queue_free)
+
+func spawn_hit_particles(pos: Vector2, char_name: String) -> void:
+	if main_game == null or not is_instance_valid(main_game): return
+	var col = get_char_color(char_name)
+	# Mała iskra trafienia
+	var cp = CPUParticles2D.new()
+	cp.position = pos
+	cp.emitting = true
+	cp.one_shot = true
+	cp.explosiveness = 1.0
+	cp.amount = 8
+	cp.lifetime = 0.35
+	cp.spread = 60.0
+	cp.gravity = Vector2(0, 200)
+	cp.initial_velocity_min = 60
+	cp.initial_velocity_max = 140
+	cp.scale_amount_min = 2.0
+	cp.scale_amount_max = 4.0
+	cp.color = col
+	main_game.add_child(cp)
+	cp.finished.connect(cp.queue_free)
+
+func spawn_death_particles(pos: Vector2, char_name: String) -> void:
+	if main_game == null or not is_instance_valid(main_game): return
+	var col = get_char_color(char_name)
+	# Duża eksplozja przy śmierci
+	for i in range(3):
+		var cp = CPUParticles2D.new()
+		cp.position = pos
+		cp.emitting = true
+		cp.one_shot = true
+		cp.explosiveness = 0.95
+		cp.amount = 12 + i * 6
+		cp.lifetime = 0.5 + i * 0.2
+		cp.spread = 180.0
+		cp.gravity = Vector2(0, 250 - i * 50)
+		cp.initial_velocity_min = 80 + i * 40
+		cp.initial_velocity_max = 180 + i * 60
+		cp.scale_amount_min = 4.0 - i * 0.5
+		cp.scale_amount_max = 8.0 - i * 0.5
+		cp.color = col if i == 0 else Color(col.r * 0.7, col.g * 0.7, col.b * 0.7, 0.8)
+		main_game.add_child(cp)
+		cp.finished.connect(cp.queue_free)
+
+func spawn_damage_text(pos: Vector2, text: String, color: Color = Color.WHITE) -> void:
+	if main_game == null or not is_instance_valid(main_game): return
+	var label = Label.new()
+	label.text = text
+	label.z_index = 5
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 4)
+	label.position = pos - Vector2(20, 20)
+	main_game.add_child(label)
+	
+	var tween = create_tween().set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 40, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.6).set_delay(0.2)
+	tween.chain().tween_callback(label.queue_free)
