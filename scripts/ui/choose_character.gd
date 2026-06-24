@@ -121,7 +121,7 @@ func _bind_preview_signals() -> void:
 		var button = buttons[character_name]
 		if not is_instance_valid(button):
 			continue
-		var preview_name := character_name
+		var preview_name: String = character_name
 		button.mouse_entered.connect(func() -> void:
 			_on_character_hover_start(preview_name)
 		)
