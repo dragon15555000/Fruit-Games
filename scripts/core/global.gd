@@ -300,8 +300,8 @@ func take_damage(target: String, amount: float, reason: String = "") -> void:
 	var acc = _damage_accumulator.get(key, 0.0) + amount
 	
 	if int(acc) > 0 or characters[target]["hp"] <= 0:
-		var log_amount = int(acc) if acc >= 1.0 else amount
-		var msg = reason + " → " + target + " [color=#ff4444]-" + str(int(acc) if int(acc) > 0 else 1) + " HP[/color]"
+		var display_dmg = int(acc) if int(acc) > 0 else 1
+		var msg = reason + " → " + target + " [color=#ff4444]-" + str(display_dmg) + " HP[/color]"
 		if characters[target]["hp"] <= 0:
 			msg = "[b][color=red]" + reason + " → " + target + " (ELIMINACJA)[/color][/b]"
 		
