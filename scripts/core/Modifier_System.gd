@@ -320,19 +320,24 @@ func _apply_lifesteal(shooter_name: String, dmg: float) -> void:
 	Global.characters[shooter_name]["hp"] = min(cur_hp + dmg * 0.3, max_hp)
 	
 	var node = _find_character(shooter_name)
-	if node and node.has_method("_refresh_hp_scaled_state"):
-		node._refresh_hp_scaled_state()
+	if node:
+		Global.spawn_damage_text(node.global_position + Vector2(0, -30), "+" + str(int(dmg * 0.3)), Color(0.2, 1.0, 0.4))
+		if node.has_method("_refresh_hp_scaled_state"):
+			node._refresh_hp_scaled_state()
 
 func _apply_juicy_core(shooter_name: String) -> void:
 	if not Global.characters.has(shooter_name):
 		return
 	var max_hp  = float(Global.base_characters[shooter_name]["hp"])
 	var cur_hp  = float(Global.characters[shooter_name]["hp"])
-	Global.characters[shooter_name]["hp"] = min(cur_hp + (max_hp - cur_hp) * 0.15, max_hp)
+	var heal_amt = (max_hp - cur_hp) * 0.15
+	Global.characters[shooter_name]["hp"] = min(cur_hp + heal_amt, max_hp)
 
 	var node = _find_character(shooter_name)
-	if node and node.has_method("_refresh_hp_scaled_state"):
-		node._refresh_hp_scaled_state()
+	if node:
+		Global.spawn_damage_text(node.global_position + Vector2(0, -30), "+" + str(int(heal_amt)), Color(0.2, 1.0, 0.4))
+		if node.has_method("_refresh_hp_scaled_state"):
+			node._refresh_hp_scaled_state()
 
 func _passive_still_green(char_name: String, delta: float, char_node: Node) -> void:
 	var max_hp = float(Global.base_characters[char_name]["hp"])

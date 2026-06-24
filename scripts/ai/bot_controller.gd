@@ -79,24 +79,34 @@ func _process_ai_logic(delta: float) -> void:
 		var dx = target.global_position.x - character.global_position.x
 		var dy = target.global_position.y - character.global_position.y
 
-		if abs(dx) > 50.0:
+		var hp = Global.characters.get(char_name, {}).get("hp", 100.0)
+		var is_low_hp = hp < 35.0
+		var is_high_hp = hp > 75.0
+
+		if abs(dx) > (160.0 if is_low_hp else 50.0):
 			direction = sign(dx)
+			if is_low_hp: # Kiting: uciekaj jeśli cel jest zbyt blisko
+				if abs(dx) < 140.0:
+					direction = -sign(dx)
 		else:
 			direction = lerp(direction, float([ - 1.0, 0.0, 1.0].pick_random()), 0.2)
 
 		if dy < -30.0 and jump_timer <= 0.0:
-			jump_timer = 0.7 + randf() * 0.4
+			jump_timer = (0.5 if is_low_hp else 0.7) + randf() * 0.4
 			_do_jump()
-		elif jump_timer <= 0.0 and randf() < 0.015:
-			jump_timer = 1.2
+		elif jump_timer <= 0.0 and randf() < (0.04 if is_low_hp else 0.015):
+			jump_timer = 1.0
 			_do_jump()
 
 		# Strzelanie
 		var fire_rate = float(Global.characters.get(char_name, {}).get("fire_rate", 0.6))
 		if shoot_timer <= 0.0:
+			var hp = Global.characters.get(char_name, {}).get("hp", 100.0)
 			shoot_timer = fire_rate + randf() * 0.25
 			var shoot_dir = (target.global_position - character.global_position).normalized()
-			shoot_dir = shoot_dir.rotated(deg_to_rad(randf_range(-12.0, 12.0)))
+			# Celność: bardziej precyzyjna gdy bot ma dużo HP
+			var spread = 12.0 if hp < 40.0 else (6.0 if hp > 75.0 else 9.0)
+			shoot_dir = shoot_dir.rotated(deg_to_rad(randf_range(-spread, spread)))
 			character.shoot.emit(character.global_position, shoot_dir)
 			if character.has_node("ReloadTime"):
 				character.get_node("ReloadTime").start()

@@ -18,8 +18,33 @@ func _ready() -> void:
 		get_node_or_null("Control/Margin/Grid/P3Bar"),
 		get_node_or_null("Control/Margin/Grid/P4Bar")
 	]
+	_style_bars()
 	_setup_debug_overlay()
 	update_hud()
+
+func _style_bars() -> void:
+	var sb_bg = StyleBoxFlat.new()
+	sb_bg.bg_color = Color(0.15, 0.15, 0.15, 0.6)
+	sb_bg.set_corner_radius_all(4)
+	sb_bg.expand_margin_left = 1
+	sb_bg.expand_margin_right = 1
+	sb_bg.expand_margin_top = 1
+	sb_bg.expand_margin_bottom = 1
+	
+	var sb_fg = StyleBoxFlat.new()
+	sb_fg.bg_color = Color(1, 1, 1, 1)
+	sb_fg.set_corner_radius_all(3)
+	sb_fg.border_width_left = 1
+	sb_fg.border_width_right = 1
+	sb_fg.border_width_top = 1
+	sb_fg.border_width_bottom = 1
+	sb_fg.border_color = Color(1, 1, 1, 0.3)
+	
+	for bar in bars:
+		if bar:
+			bar.add_theme_stylebox_override("background", sb_bg)
+			bar.add_theme_stylebox_override("fill", sb_fg)
+			bar.custom_minimum_size.y = 10
 
 func _process(_delta: float) -> void:
 	# Częsta aktualizacja na wypadek zmian HP / modów
@@ -78,11 +103,13 @@ func update_hud() -> void:
 		
 		if is_alive:
 			if is_rot_critical:
-				txt += "[color=#cc33ff]HP: " + str(int(hp)) + " (GNICIE!)[/color]\n"
+				var blink = (Time.get_ticks_msec() / 200) % 2 == 0
+				var color_code = "#cc33ff" if blink else "#ffffff"
+				txt += "[color=" + color_code + "][b]HP: " + str(int(hp)) + " (GNICIE!)[/b][/color]\n"
 			else:
 				txt += "HP: " + str(int(hp)) + "\n"
 		else:
-			txt += "[color=red]MARTWY[/color]\n"
+			txt += "[color=red][b]MARTWY[/b][/color]\n"
 			
 		# Punkty (Kille)
 		var pts = Global.points.get(char_name, 0)

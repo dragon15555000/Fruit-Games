@@ -187,10 +187,12 @@ func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
 
 	var dmg = ModifierSystem.apply_on_receive(character_name, raw_dmg, attacker_name)
 	if dmg <= 0.0:
+		Global.spawn_damage_text(global_position + Vector2(0, -20), "BLOCK", Color(0.6, 0.8, 1.0))
 		return 0.0
 
 	AudioManager.play_sound("hit")
 	Global.spawn_particles(global_position, Color(1, 0, 0), 5)
+	Global.spawn_damage_text(global_position + Vector2(0, -20), str(int(dmg)), Color(1.0, 0.3, 0.3))
 	_refresh_hp_scaled_state()
 	if _visuals:
 		_visuals.trigger_hit_flash()
@@ -238,43 +240,64 @@ func die() -> void:
 	Global.alive[character_name] = false
 	Global.death_order.append(character_name)
 
-	queue_free()
+	# Animacja śmierci - "pop and fade"
+	if is_instance_valid(_visuals) and is_instance_valid(fruit_sprite):
+		# Wyłącz kolizje
+		set_collision_layer_value(1, false)
+		set_collision_mask_value(1, false)
+		velocity = Vector2.ZERO
+		
+		var tween = create_tween().set_parallel(true)
+		# Skok skali (pop)
+		tween.tween_property(fruit_sprite, "scale", fruit_sprite.scale * 1.5, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		# Zanik (fade) i powrót skali
+		tween.chain().set_parallel(true)
+		tween.tween_property(fruit_sprite, "scale", Vector2.ZERO, 0.35).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_IN)
+		tween.tween_property(fruit_sprite, "modulate:a", 0.0, 0.35)
+		
+		# Ukryj pasek zdrowia i etykietę
+		if is_instance_valid(health_bar):
+			tween.tween_property(health_bar, "modulate:a", 0.0, 0.2)
+		
+		tween.chain().tween_callback(queue_free)
+	else:
+		queue_free()
 
 
 func _get_fatality_fx(target_name: String, killer_name: String) -> Dictionary:
 	var pair_fx = {
 		"Strawberry|Pineapple": {
-			"label": "🍍 " + target_name + " został rozgnieciony przez " + killer_name,
+			"label": "[b]🍍 " + target_name + " zmiażdżony przez " + killer_name + "![/b]",
 			"color": Color(1.0, 0.35, 0.18),
 			"burst": Color(1.0, 0.9, 0.25),
 			"amount": 36
 		},
 		"Pineapple|Watermelon": {
-			"label": "💥 " + target_name + " eksplodował pod ciosem " + killer_name,
+			"label": "[b]💥 " + target_name + " eksplodował po ciosie " + killer_name + "![/b]",
 			"color": Color(0.95, 0.55, 0.15),
 			"burst": Color(0.25, 0.9, 0.55),
 			"amount": 42
 		},
 		"Watermelon|Orange": {
-			"label": "🍊 " + target_name + " rozsypał się od precyzyjnego strzału " + killer_name,
+			"label": "[b]🍊 " + target_name + " rozerwany precyzją " + killer_name + "![/b]",
 			"color": Color(1.0, 0.2, 0.45),
 			"burst": Color(1.0, 0.75, 0.1),
 			"amount": 30
 		},
 		"Grape|Lemon": {
-			"label": "🍋 " + target_name + " pękł w kwaśnym rozbłysku po trafieniu " + killer_name,
+			"label": "[b]🍋 " + target_name + " pękł w kwaśnym soku " + killer_name + "![/b]",
 			"color": Color(0.65, 0.25, 0.85),
 			"burst": Color(1.0, 1.0, 0.25),
 			"amount": 28
 		},
 		"Lemon|Strawberry": {
-			"label": "🍓 " + target_name + " został rozszarpany przez " + killer_name,
+			"label": "[b]🍓 " + target_name + " wyciśnięty do zera przez " + killer_name + "![/b]",
 			"color": Color(1.0, 0.95, 0.2),
 			"burst": Color(1.0, 0.35, 0.35),
 			"amount": 26
 		},
 		"Orange|Grape": {
-			"label": "🍇 " + target_name + " zniknął w fioletowym wybuchu po strzale " + killer_name,
+			"label": "[b]🍇 " + target_name + " zniknął w fioletowej mgle " + killer_name + "![/b]",
 			"color": Color(1.0, 0.55, 0.1),
 			"burst": Color(0.7, 0.3, 1.0),
 			"amount": 24

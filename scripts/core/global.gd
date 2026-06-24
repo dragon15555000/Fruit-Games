@@ -294,11 +294,11 @@ func take_damage(target: String, amount: float, reason: String = "") -> void:
 	
 	if int(acc) > 0 or characters[target]["hp"] <= 0:
 		var log_amount = int(acc) if acc >= 1.0 else amount
-		var msg = reason + "  →  " + target + " -" + str(int(acc) if int(acc) > 0 else 1) + " HP"
+		var msg = reason + " → " + target + " [color=#ff4444]-" + str(int(acc) if int(acc) > 0 else 1) + " HP[/color]"
 		if characters[target]["hp"] <= 0:
-			msg = reason + "  →  " + target + " (ELIMINACJA)"
+			msg = "[b][color=red]" + reason + " → " + target + " (ELIMINACJA)[/color][/b]"
 		
-		print(msg)
+		print(msg.replace("[b]", "").replace("[/b]", "").replace("[color=red]", "").replace("[color=#ff4444]", "").replace("[/color]", ""))
 		kill_feed_message.emit(msg)
 		_damage_accumulator[key] = acc - int(acc)
 	else:
@@ -336,4 +336,22 @@ func spawn_particles(pos: Vector2, color: Color, amount: int = 15) -> void:
 	cp.scale_amount_max = 6.0
 	cp.color = color
 	main_game.add_child(cp)
-	get_tree().create_timer(1.0).timeout.connect(cp.queue_free)
+	cp.finished.connect(cp.queue_free)
+
+func spawn_damage_text(pos: Vector2, text: String, color: Color = Color.WHITE) -> void:
+	if main_game == null or not is_instance_valid(main_game): return
+	var label = Label.new()
+	label.text = text
+	label.z_index = 5
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 4)
+	label.position = pos - Vector2(20, 20)
+	main_game.add_child(label)
+	
+	var tween = create_tween().set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 40, 0.6).set_trans(Tween.TRANS_OUT).set_ease(Tween.EASE_CUBIC)
+	tween.tween_property(label, "modulate:a", 0.0, 0.6).set_delay(0.2)
+	tween.chain().tween_callback(label.queue_free)
