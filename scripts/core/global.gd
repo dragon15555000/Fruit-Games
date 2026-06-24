@@ -417,6 +417,6 @@ func spawn_damage_text(pos: Vector2, text: String, color: Color = Color.WHITE) -
 	main_game.add_child(label)
 	
 	var tween = create_tween().set_parallel(true)
-	tween.tween_property(label, "position:y", label.position.y - 40, 0.6).set_trans(Tween.TRANS_OUT).set_ease(Tween.EASE_CUBIC)
+	tween.tween_property(label, "position:y", label.position.y - 40, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(label, "modulate:a", 0.0, 0.6).set_delay(0.2)
 	tween.chain().tween_callback(label.queue_free)
