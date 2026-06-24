@@ -41,5 +41,8 @@ func _ready() -> void:
 		var actual = body.receive_damage(dmg, shooter_name)
 		if actual > 0.0:
 			Global.take_damage(target_name, actual, "💥 Eksplozja od " + shooter_name)
+			# Mody on_hit dla eksplozji
+			if is_instance_valid(body) and Global.alive.get(target_name, false):
+				ModifierSystem.apply_on_hit(shooter_name, body, global_position, actual)
 
 	queue_free()

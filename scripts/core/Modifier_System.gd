@@ -318,6 +318,10 @@ func _apply_lifesteal(shooter_name: String, dmg: float) -> void:
 	var max_hp = float(Global.base_characters[shooter_name]["hp"])
 	var cur_hp = float(Global.characters[shooter_name]["hp"])
 	Global.characters[shooter_name]["hp"] = min(cur_hp + dmg * 0.3, max_hp)
+	
+	var node = _find_character(shooter_name)
+	if node and node.has_method("_refresh_hp_scaled_state"):
+		node._refresh_hp_scaled_state()
 
 func _apply_juicy_core(shooter_name: String) -> void:
 	if not Global.characters.has(shooter_name):
@@ -325,6 +329,10 @@ func _apply_juicy_core(shooter_name: String) -> void:
 	var max_hp  = float(Global.base_characters[shooter_name]["hp"])
 	var cur_hp  = float(Global.characters[shooter_name]["hp"])
 	Global.characters[shooter_name]["hp"] = min(cur_hp + (max_hp - cur_hp) * 0.15, max_hp)
+
+	var node = _find_character(shooter_name)
+	if node and node.has_method("_refresh_hp_scaled_state"):
+		node._refresh_hp_scaled_state()
 
 func _passive_still_green(char_name: String, delta: float, char_node: Node) -> void:
 	var max_hp = float(Global.base_characters[char_name]["hp"])
