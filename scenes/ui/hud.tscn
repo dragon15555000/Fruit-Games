@@ -38,6 +38,14 @@ bbcode_enabled = true
 text = "P1"
 mouse_filter = 2
 
+[node name="P1Bar" type="ProgressBar" parent="Control/Margin/Grid"]
+layout_mode = 0
+offset_top = 50.0
+offset_right = 200.0
+offset_bottom = 60.0
+value = 100.0
+show_percentage = false
+
 [node name="P2Label" type="RichTextLabel" parent="Control/Margin/Grid"]
 layout_mode = 1
 anchors_preset = 1
@@ -53,6 +61,18 @@ text = "P2"
 text_direction = 2
 mouse_filter = 2
 
+[node name="P2Bar" type="ProgressBar" parent="Control/Margin/Grid"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_top = 50.0
+offset_bottom = 60.0
+grow_horizontal = 0
+value = 100.0
+show_percentage = false
+
 [node name="P3Label" type="RichTextLabel" parent="Control/Margin/Grid"]
 layout_mode = 1
 anchors_preset = 2
@@ -66,6 +86,18 @@ theme_override_font_sizes/bold_font_size = 22
 bbcode_enabled = true
 text = "P3"
 mouse_filter = 2
+
+[node name="P3Bar" type="ProgressBar" parent="Control/Margin/Grid"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -100.0
+offset_right = 200.0
+offset_bottom = -90.0
+grow_vertical = 0
+value = 100.0
+show_percentage = false
 
 [node name="RoundLabel" type="Label" parent="Control/Margin/Grid"]
 layout_mode = 1
@@ -98,3 +130,19 @@ bbcode_enabled = true
 text = "P4"
 text_direction = 2
 mouse_filter = 2
+
+[node name="P4Bar" type="ProgressBar" parent="Control/Margin/Grid"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -100.0
+offset_bottom = -90.0
+grow_horizontal = 0
+grow_vertical = 0
+value = 100.0
+show_percentage = false
+
