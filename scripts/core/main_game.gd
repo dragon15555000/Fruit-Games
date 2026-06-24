@@ -50,6 +50,7 @@ var _pause_layer: CanvasLayer = null
 var juice_y:       float = 180.0
 var _juice_time:   float = 0.0
 var _juice_warned: bool  = false
+var _juice_damage_timer: float = 0.0
 
 var map_scenes: Array = [
 	preload("res://scenes/maps/fruit_bowl.tscn"),
@@ -86,7 +87,6 @@ func _ready() -> void:
 	_spawn_player(Global.player4_character, spawns[3], "p4")
 
 	AudioManager.play_bgm()
-	$Gnicie.start()
 
 	# HUD
 	var hud_scene = preload("res://scenes/ui/hud.tscn")
@@ -299,10 +299,6 @@ func _do_spawn_bullet(pos: Vector2, dir: Vector2, player_prefix: String) -> void
 		extra.setup(pos, extra_dir, char_name)
 
 
-func _on_gnicie_timeout() -> void:
-	_end_round("")
-
-
 var shake_amount: float = 0.0
 
 func add_shake(amount: float) -> void:
@@ -327,12 +323,20 @@ func _physics_process(delta: float) -> void:
 		Global.kill_feed_message.emit("🍹 Sok owocowy się wznosi!")
 
 	if not _ending_round and juice_y < 200.0:
+		_juice_damage_timer += delta
+		var should_apply_juice = _juice_damage_timer >= 0.25
+		
 		for player in $Players.get_children():
 			var char_name = player_characters.get(player.name, "")
 			if char_name == "" or not Global.alive.get(char_name, false):
 				continue
 			if player.position.y + 8.0 > juice_y:
-				Global.take_damage(char_name, 40.0 * delta, "🍹 Sok owocowy")
+				if should_apply_juice:
+					player.apply_damage(10.0, "🍹 Sok owocowy")
+					AudioManager.play_sound("hit", 0.5, -5.0) # Podwodny/tłumiony hit
+		
+		if should_apply_juice:
+			_juice_damage_timer = 0.0
 
 	if _ending_round:
 		return
@@ -355,9 +359,6 @@ func _end_round(winning_character: String) -> void:
 	_ending_round     = true
 	Global.round_over = true
 	Global.winner     = winning_character
-
-	if has_node("Gnicie"):
-		$Gnicie.stop()
 
 	Global.build_ranking()
 	Global.assign_points()

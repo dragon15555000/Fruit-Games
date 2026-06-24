@@ -33,6 +33,11 @@ var is_remote: bool:
 
 var max_speed:  float = 0.0
 var base_speed: float = 0.0
+var hp_ratio: float = 1.0
+var speed_scale: float = 1.0
+var knockback_scale: float = 1.0
+var hp_visual_scale: float = 1.0
+var is_critical_ogryzek: bool = false
 
 # ── KLUCZOWA FLAGA — zapobiega wielokrotnemu wywołaniu die() ─────────────────
 # Problem: queue_free() nie usuwa węzła natychmiast. _physics_process może być
@@ -96,6 +101,10 @@ var   gravity:      float = 15.0
 const MAX_GRAVITY:  float = 20.0
 const ACCELERATION: float = 16.0
 const FRICTION:     float = 18.0
+const STUCK_RECOVERY_SPEED: float = 18.0
+const WALL_STUCK_FRAMES: int = 8
+var _wall_stuck_frames: int = 0
+var _last_floor_y: float = INF
 
 
 # ─────────────────────────────────────────────
@@ -110,7 +119,7 @@ func _ready() -> void:
 
 	# Wszystkie komponenty muszą istnieć PRZED apply_on_ready —
 	# mody piszą przez proxy settery chronione przez if _modifier_state / if _rot_component.
-	# Antirot robi rot_time_remaining += 5.0, więc RotComponent musi być gotowy.
+	# Antirot robi rot_time_remaining += 5.0, connectivity_check RotComponent musi być gotowy.
 
 	# ModifierState — przed RotComponent żeby preservative_timer był gotowy
 	_modifier_state = preload("res://scripts/characters/modifier_state.gd").new()
@@ -140,6 +149,7 @@ func _ready() -> void:
 	Reloading.wait_time  = Global.characters[character_name]["fire_rate"]
 	health_bar.max_value = Global.base_characters[character_name]["hp"]
 	health_bar.value     = Global.characters[character_name]["hp"]
+	_refresh_hp_scaled_state()
 
 	add_to_group("Players")  # wymagane przez ModifierSystem._find_character()
 
@@ -166,6 +176,9 @@ func get_input() -> void:
 func apply_slow()   -> void: if _modifier_state: _modifier_state.apply_slow()
 func apply_poison() -> void: if _modifier_state: _modifier_state.apply_poison()
 
+func get_knockback_scale() -> float:
+	return knockback_scale
+
 ## Główna brama obrażeń — wywoływana z bullet.gd.
 ## Zwraca faktyczne obrażenia po modyfikacjach (0.0 = zablokowane).
 func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
@@ -175,10 +188,15 @@ func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
 
 	var dmg = ModifierSystem.apply_on_receive(character_name, raw_dmg, attacker_name)
 	if dmg <= 0.0:
+		Global.spawn_damage_text(global_position + Vector2(0, -20), "BLOCK", Color(0.6, 0.8, 1.0))
 		return 0.0
 
 	AudioManager.play_sound("hit")
 	Global.spawn_hit_particles(global_position, character_name)
+	Global.spawn_damage_text(global_position + Vector2(0, -20), str(int(dmg)), Color(1.0, 0.3, 0.3))
+	_refresh_hp_scaled_state()
+	if _visuals:
+		_visuals.trigger_hit_flash()
 
 	# Sprawdź czy cios byłby śmiertelny
 	var cur_hp = float(Global.characters[character_name]["hp"])
@@ -188,6 +206,18 @@ func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
 
 	return dmg
 
+
+## Publiczny wrapper do nakładania obrażeń — zapewnia przejście przez receive_damage
+func apply_damage(raw_dmg: float, reason: String = "") -> void:
+	var attacker_name = reason
+	if reason.contains("od "):
+		attacker_name = reason.get_slice("od ", 1)
+	
+	var actual = receive_damage(raw_dmg, attacker_name)
+	if actual > 0.0:
+		Global.take_damage(character_name, actual, reason)
+
+
 ## Śmierć — wywołaj tylko przez tę funkcję, nigdy queue_free() bezpośrednio.
 func die() -> void:
 	if _is_dying:
@@ -195,14 +225,136 @@ func die() -> void:
 	_is_dying = true
 
 	AudioManager.play_sound("death")
+	AudioManager.play_sound("melee", 0.5, 4.0) # Basowe pierdnięcie śmierci
 	if Global.main_game:
 		Global.main_game.add_shake(15.0)
+	
 	Global.spawn_death_particles(global_position, character_name)
+	
+	var killer_reason: String = Global.last_hit_by.get(character_name, "")
+	var killer_name: String = ""
+	if killer_reason.contains("od "):
+		killer_name = killer_reason.get_slice("od ", 1)
+	var death_fx = _get_fatality_fx(character_name, killer_name)
+	
+	if Global.main_game:
+		_spawn_fatality_burst(death_fx["burst"], death_fx["color"], killer_name)
+	if killer_name != "":
+		Global.kill_feed_message.emit("☠️ " + death_fx["label"])
 
 	Global.alive[character_name] = false
 	Global.death_order.append(character_name)
 
-	queue_free()
+	# Animacja śmierci - "pop and fade"
+	if is_instance_valid(_visuals) and is_instance_valid(fruit_sprite):
+		# Wyłącz kolizje
+		set_collision_layer_value(1, false)
+		set_collision_mask_value(1, false)
+		velocity = Vector2.ZERO
+		
+		var tween = create_tween().set_parallel(true)
+		# Skok skali (pop)
+		tween.tween_property(fruit_sprite, "scale", fruit_sprite.scale * 1.5, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		# Zanik (fade) i powrót skali
+		tween.chain().set_parallel(true)
+		tween.tween_property(fruit_sprite, "scale", Vector2.ZERO, 0.35).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_IN)
+		tween.tween_property(fruit_sprite, "modulate:a", 0.0, 0.35)
+		
+		# Ukryj pasek zdrowia i etykietę
+		if is_instance_valid(health_bar):
+			tween.tween_property(health_bar, "modulate:a", 0.0, 0.2)
+		
+		tween.chain().tween_callback(queue_free)
+	else:
+		queue_free()
+
+
+func _get_fatality_fx(target_name: String, killer_name: String) -> Dictionary:
+	var pair_fx = {
+		"Strawberry|Pineapple": {
+			"label": "[b]🍍 " + target_name + " zmiażdżony przez " + killer_name + "![/b]",
+			"color": Color(1.0, 0.35, 0.18),
+			"burst": Color(1.0, 0.9, 0.25),
+			"amount": 36
+		},
+		"Pineapple|Watermelon": {
+			"label": "[b]💥 " + target_name + " eksplodował po ciosie " + killer_name + "![/b]",
+			"color": Color(0.95, 0.55, 0.15),
+			"burst": Color(0.25, 0.9, 0.55),
+			"amount": 42
+		},
+		"Watermelon|Orange": {
+			"label": "[b]🍊 " + target_name + " rozerwany precyzją " + killer_name + "![/b]",
+			"color": Color(1.0, 0.2, 0.45),
+			"burst": Color(1.0, 0.75, 0.1),
+			"amount": 30
+		},
+		"Grape|Lemon": {
+			"label": "[b]🍋 " + target_name + " pękł w kwaśnym soku " + killer_name + "![/b]",
+			"color": Color(0.65, 0.25, 0.85),
+			"burst": Color(1.0, 1.0, 0.25),
+			"amount": 28
+		},
+		"Lemon|Strawberry": {
+			"label": "[b]🍓 " + target_name + " wyciśnięty do zera przez " + killer_name + "![/b]",
+			"color": Color(1.0, 0.95, 0.2),
+			"burst": Color(1.0, 0.35, 0.35),
+			"amount": 26
+		},
+		"Orange|Grape": {
+			"label": "[b]🍇 " + target_name + " zniknął w fioletowej mgle " + killer_name + "![/b]",
+			"color": Color(1.0, 0.55, 0.1),
+			"burst": Color(0.7, 0.3, 1.0),
+			"amount": 24
+		}
+	}
+	var key = target_name + "|" + killer_name
+	if pair_fx.has(key):
+		return pair_fx[key]
+
+	var target_fx = {
+		"Strawberry": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.95, 0.15, 0.2), "burst": Color(1.0, 0.55, 0.15), "amount": 20},
+		"Orange": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(1.0, 0.55, 0.1), "burst": Color(1.0, 0.85, 0.2), "amount": 18},
+		"Pineapple": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.85, 0.75, 0.15), "burst": Color(0.55, 1.0, 0.25), "amount": 26},
+		"Grape": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.55, 0.2, 0.75), "burst": Color(0.75, 0.3, 1.0), "amount": 19},
+		"Lemon": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.95, 0.95, 0.25), "burst": Color(0.7, 1.0, 0.15), "amount": 17},
+		"Watermelon": {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.15, 0.75, 0.25), "burst": Color(1.0, 0.2, 0.4), "amount": 28},
+	}
+	return target_fx.get(target_name, {"label": target_name + " został wyeliminowany przez " + killer_name, "color": Color(0.5, 0, 0), "burst": Color(1.0, 0.4, 0.15), "amount": 20})
+
+
+func _spawn_fatality_burst(burst_color: Color, core_color: Color, killer_name: String) -> void:
+	if not Global.main_game:
+		return
+	var burst = CPUParticles2D.new()
+	burst.position = global_position
+	burst.one_shot = true
+	burst.emitting = true
+	burst.amount = 18
+	burst.lifetime = 0.55
+	burst.spread = 180.0
+	burst.gravity = Vector2(0, 260)
+	burst.initial_velocity_min = 180
+	burst.initial_velocity_max = 320
+	burst.scale_amount_min = 2.5
+	burst.scale_amount_max = 5.0
+	burst.color = burst_color.lightened(0.2)
+	Global.main_game.add_child(burst)
+	if killer_name != "":
+		var ring = CPUParticles2D.new()
+		ring.position = global_position
+		ring.one_shot = true
+		ring.emitting = true
+		ring.amount = 24
+		ring.lifetime = 0.28
+		ring.spread = 360.0
+		ring.gravity = Vector2.ZERO
+		ring.initial_velocity_min = 140
+		ring.initial_velocity_max = 180
+		ring.scale_amount_min = 1.2
+		ring.scale_amount_max = 2.4
+		ring.color = core_color
+		Global.main_game.add_child(ring)
 
 
 # ─────────────────────────────────────────────
@@ -224,6 +376,9 @@ func _physics_process(delta: float) -> void:
 		return
 
 	health_bar.value = Global.characters[character_name]["hp"]
+	_refresh_hp_scaled_state()
+	if _visuals:
+		_visuals.set_rot_active(rot_time_remaining < 30.0)
 
 	# Mody pasywne
 	ModifierSystem.apply_passive(character_name, delta, self)
@@ -242,6 +397,7 @@ func _physics_process(delta: float) -> void:
 		coyote_time_activated = false
 		_double_jump_used = false
 		gravity = lerp(gravity, 12.0, 12.0 * delta)
+		_last_floor_y = global_position.y
 	else:
 		if CoyoteTimer.is_stopped() and not coyote_time_activated:
 			CoyoteTimer.start()
@@ -289,3 +445,40 @@ func _physics_process(delta: float) -> void:
 
 	velocity.y += gravity
 	move_and_slide()
+
+	# Jeżeli postać wciska się w ścianę przez kilka klatek, lekko odpychamy ją od przeszkody.
+	var touching_left := is_on_wall() and get_wall_normal().x > 0.0
+	var touching_right := is_on_wall() and get_wall_normal().x < 0.0
+	if is_on_floor():
+		_wall_stuck_frames = 0
+	elif touching_left or touching_right:
+		_wall_stuck_frames += 1
+		if _wall_stuck_frames >= WALL_STUCK_FRAMES:
+			velocity.x = -get_wall_normal().x * STUCK_RECOVERY_SPEED
+			velocity.y = min(velocity.y, JUMP_HEIGHT * 0.35)
+			global_position.x += -get_wall_normal().x * 2.0
+			_wall_stuck_frames = 0
+	else:
+		_wall_stuck_frames = 0
+
+
+func _refresh_hp_scaled_state() -> void:
+	var max_hp = float(Global.base_characters.get(character_name, {}).get("hp", 100))
+	var current_hp = float(Global.characters.get(character_name, {}).get("hp", max_hp))
+	hp_ratio = clampf(current_hp / max_hp, 0.0, 1.0)
+	is_critical_ogryzek = hp_ratio <= 0.25
+
+	# Prawo Ogryzka: niższe HP = mniejsza postać, szybszy ruch, mocniejszy knockback.
+	hp_visual_scale = lerpf(0.62, 1.0, hp_ratio)
+	speed_scale = lerpf(1.55, 1.0, hp_ratio)
+	knockback_scale = lerpf(2.3, 1.0, hp_ratio)
+	if is_critical_ogryzek:
+		hp_visual_scale = min(hp_visual_scale, 0.54)
+		speed_scale = max(speed_scale, 1.75)
+		knockback_scale = max(knockback_scale, 2.9)
+	max_speed = base_speed * speed_scale
+
+	if _visuals and _visuals.has_method("set_hp_scaling"):
+		_visuals.set_hp_scaling(hp_visual_scale)
+	if _visuals and _visuals.has_method("set_critical_ogryzek"):
+		_visuals.set_critical_ogryzek(is_critical_ogryzek)

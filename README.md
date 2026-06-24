@@ -24,6 +24,30 @@ Godot 4.3, naciśnij F5. W menu głównym ustaw sloty (Gracz / Bot / Wyłączony
 
 *Open in Godot 4.3, press F5. Set slots in the main menu (Player / Bot / Disabled), minimum 2 active. Experimental LAN via ENet.*
 
+| Postać | HP | Speed | DMG | Fire Rate | Styl |
+|--------|-----|-------|-----|-----------|------|
+| Strawberry | 110 | 92 | 23 | 0.62 s | Mobilny duelist, 2-strzałowy nacisk i łatwe ustawianie pozycji |
+| Orange | 70 | 88 | 66 | 2.2 s | Snajper / artyleria z mocnym pojedynczym uderzeniem i wybuchem |
+| Pineapple | 240 | 58 | 38 | 0.55 s | Brawler melee, lepkie trafienia i walka w zwarciu |
+| Grape | 82 | 118 | 11 | 0.12 s | Szybkostrzelny spammer, najlepszy do ciągłej presji |
+| Lemon | 88 | 98 | 16 | 0.72 s | Kontroler przestrzeni, pociski z magnetycznym prowadzeniem |
+| Watermelon | 310 | 46 | 72 | 1.35 s | Ciężki tank, wolniejszy ale bardzo karzący za błąd |
+
+Każda postać ma też wbudowany charakter:
+- Strawberry: `double_shot`
+- Orange: `explosive`
+- Pineapple: `sticky`
+- Grape: `shotgun`
+- Lemon: `magnetic_seed` i `fermentation`
+- Watermelon: `stone_seed` i `armor`
+
+Pineapple walczy w zwarciu — jego atak obszarowy działa zamiast zwykłego strzału.
+
+Szczegółowy balans i checklistę testową przeniosłem do:
+
+- [docs/balance.md](file:///home/marcin/projects/Fruit-Games/docs/balance.md)
+- [docs/playtest.md](file:///home/marcin/projects/Fruit-Games/docs/playtest.md)
+
 ---
 
 ## Struktura / Structure

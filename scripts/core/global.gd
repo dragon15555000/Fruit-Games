@@ -36,16 +36,18 @@ var ranking:          Array = []
 var modifier_pickers: Array = []
 
 var shot_counter: Dictionary = {}
+var last_hit_by: Dictionary = {}
+var _damage_accumulator: Dictionary = {}
 
 # Oryginalne staty — NIGDY nie modyfikuj tego słownika.
 # Służy jako source-of-truth przy każdym reset_all().
 const ORIGINAL_BASE_CHARACTERS: Dictionary = {
-	"Strawberry": { "hp": 120, "speed": 85,  "dmg": 25, "range": 120, "fire_rate": 0.7  },
-	"Orange":     { "hp": 85,  "speed": 95,  "dmg": 55, "range": 450, "fire_rate": 2.0  },
-	"Pineapple":  { "hp": 250, "speed": 55,  "dmg": 40, "range": 80,  "fire_rate": 0.6  },
-	"Grape":      { "hp": 110, "speed": 110, "dmg": 10, "range": 180, "fire_rate": 0.18 },
-	"Lemon":      { "hp": 80,  "speed": 90,  "dmg": 15, "range": 300, "fire_rate": 0.8  },
-	"Watermelon": { "hp": 220, "speed": 45,  "dmg": 55, "range": 90,  "fire_rate": 1.5  },
+	"Strawberry": { "hp": 110, "speed": 92,  "dmg": 23, "range": 140, "fire_rate": 0.62 },
+	"Orange":     { "hp": 70,  "speed": 88,  "dmg": 66, "range": 470, "fire_rate": 2.2 },
+	"Pineapple":  { "hp": 240, "speed": 58,  "dmg": 38, "range": 72,  "fire_rate": 0.55 },
+	"Grape":      { "hp": 82,  "speed": 118, "dmg": 11, "range": 200, "fire_rate": 0.12 },
+	"Lemon":      { "hp": 88,  "speed": 98,  "dmg": 16, "range": 260, "fire_rate": 0.72 },
+	"Watermelon": { "hp": 310, "speed": 46,  "dmg": 72, "range": 100, "fire_rate": 1.35 },
 	"Banana":     { "hp": 100, "speed": 80,  "dmg": 22, "range": 250, "fire_rate": 0.6  },
 	"Cherry":     { "hp": 70,  "speed": 105, "dmg": 20, "range": 200, "fire_rate": 0.5  },
 	"Coconut":    { "hp": 160, "speed": 70,  "dmg": 30, "range": 150, "fire_rate": 1.0  },
@@ -65,16 +67,16 @@ var modifier_registry: Dictionary = {
 	"radioactive_seed":   { "name": "Radioaktywna pestka",    "emoji": "☢️",  "category": "projectile", "trigger": "on_hit",     "desc": "Przy trafieniu zostaje toksyczna plama na 3 sek." },
 	"rot_shot":           { "name": "Strzał zgnilizny",       "emoji": "🦠",  "category": "projectile", "trigger": "on_hit",     "desc": "Trafiony wróg gnije o 3 sek szybciej." },
 	"magnetic_seed":      { "name": "Magnetyczna pestka",     "emoji": "🧲",  "category": "projectile", "trigger": "on_shoot",   "desc": "Pocisk skręca w kierunku wroga w zasięgu 2m." },
-	"thick_skin":         { "name": "Gruba skórka",           "emoji": "🥊",  "category": "defense",    "trigger": "on_apply",   "desc": "Maksymalne HP +35." },
+	"thick_skin":         { "name": "Gruba skórka",           "emoji": "🥊",  "category": "defense",    "trigger": "on_apply",   "desc": "Maksymalne HP +25." },
 	"juicy_core":         { "name": "Soczyste wnętrze",       "emoji": "💧",  "category": "defense",    "trigger": "on_hit",     "desc": "Odzyskujesz 15% brakującego HP przy trafieniu wroga." },
 	"wax_coat":           { "name": "Woskowa powłoka",        "emoji": "🕯️",  "category": "defense",    "trigger": "on_receive", "desc": "Blokujesz pierwsze trafienie w rundzie." },
-	"thorn_shield":       { "name": "Kolczasta tarcza",       "emoji": "🌵",  "category": "defense",    "trigger": "on_receive", "desc": "Wrogowie trafiający cię dostają -5 HP." },
-	"hard_fruit":         { "name": "Twardy owoc",            "emoji": "🪨",  "category": "defense",    "trigger": "on_receive", "desc": "Redukcja wszystkich obrażeń o 15%." },
+	"thorn_shield":       { "name": "Kolczasta tarcza",       "emoji": "🌵",  "category": "defense",    "trigger": "on_receive", "desc": "Wrogowie trafiający cię dostają -3 HP." },
+	"hard_fruit":         { "name": "Twardy owoc",            "emoji": "🪨",  "category": "defense",    "trigger": "on_receive", "desc": "Redukcja wszystkich obrażeń o 10%." },
 	"antirot":            { "name": "Antyzgnilizna",          "emoji": "🧴",  "category": "defense",    "trigger": "passive",    "desc": "Gnijesz o 10 sek wolniej." },
 	"preservative":       { "name": "Konserwant",             "emoji": "🛡️",  "category": "defense",    "trigger": "on_apply",   "desc": "Przez pierwsze 15 sek rundy jesteś odporny na efekty negatywne." },
 	"second_fruit":       { "name": "Drugi owoc",             "emoji": "🍀",  "category": "defense",    "trigger": "on_lethal",  "desc": "Raz na rundę przeżywasz śmiertelny cios z 5 HP." },
 	"still_green":        { "name": "Zielony jeszcze",        "emoji": "🌿",  "category": "defense",    "trigger": "passive",    "desc": "Gdy HP < 30%, regenerujesz 1 HP co 2 sek." },
-	"stone_seed":         { "name": "Kamienna pestka",        "emoji": "🗿",  "category": "defense",    "trigger": "on_apply",   "desc": "+10 pancerza, ale -10% prędkości ruchu." },
+	"stone_seed":         { "name": "Kamienna pestka",        "emoji": "🗿",  "category": "defense",    "trigger": "on_apply",   "desc": "+8 pancerza, ale -10% prędkości ruchu." },
 	"extra_bounce":       { "name": "Dodatkowe odbicie",      "emoji": "↩️",  "category": "bounce",     "trigger": "on_shoot",   "desc": "Pocisk odbija się o +1 powierzchnię więcej." },
 	"accelerating_bounce":{ "name": "Przyspieszające odbicie","emoji": "⚡",  "category": "bounce",     "trigger": "on_bounce",  "desc": "Każde odbicie zwiększa prędkość pocisku o 10%." },
 	"destroying_bounce":  { "name": "Niszczące odbicie",      "emoji": "💢",  "category": "bounce",     "trigger": "on_bounce",  "desc": "Każde odbicie dodaje +5 DMG." },
@@ -85,7 +87,7 @@ var modifier_registry: Dictionary = {
 	"rot_accelerator":    { "name": "Przyspieszacz gnicia",   "emoji": "💀",  "category": "area",       "trigger": "passive",    "desc": "Wrogowie w twoim zasięgu gniją 15% szybciej." },
 	"rot_explosion":      { "name": "Gnilna eksplozja",       "emoji": "🌋",  "category": "defense",    "trigger": "passive",    "desc": "Gdy HP < 20%, odpychasz wrogów i leczysz 10 HP (jednorazowo)." },
 	"seed_collector":     { "name": "Kolekcjoner pestek",     "emoji": "🌰",  "category": "projectile", "trigger": "on_hit",     "desc": "Każde trafienie bez otrzymania ciosu daje +1 DMG. Reset przy ciosie." },
-	"fruit_streak":       { "name": "Owocowa passa",          "emoji": "🔥",  "category": "projectile", "trigger": "on_hit",     "desc": "3 trafienia z rzędu = następny pocisk +40% obrażeń." },
+	"fruit_streak":       { "name": "Owocowa passa",          "emoji": "🔥",  "category": "projectile", "trigger": "on_hit",     "desc": "3 trafienia z rzędu = następny pocisk +30% obrażeń." },
 	"mod_duplicator":     { "name": "Duplikator modów",       "emoji": "🔄",  "category": "passive",    "trigger": "on_apply",   "desc": "Losowy posiadany modyfikator zostaje skopiowany." },
 	"bouncy":   { "name": "Odbijające pociski", "emoji": "↩️", "category": "bounce",     "trigger": "on_shoot",   "desc": "Pociski odbijają się 4 razy." },
 	"spinning": { "name": "Wirujące pociski",   "emoji": "🌪️", "category": "projectile", "trigger": "passive",    "desc": "Pociski poruszają się sinusoidalnie." },
@@ -190,6 +192,8 @@ func reset_all() -> void:
 	base_characters = ORIGINAL_BASE_CHARACTERS.duplicate(true)
 	characters      = ORIGINAL_BASE_CHARACTERS.duplicate(true)
 	shot_counter = {}
+	last_hit_by.clear()
+	_damage_accumulator.clear()
 	rot_bonus.clear()
 	alive        = {}
 	var all_chars = [player1_character, player2_character, player3_character, player4_character]
@@ -200,6 +204,18 @@ func reset_all() -> void:
 		if not modifiers.has(ch): modifiers[ch] = []
 		
 		# Wbudowane modyfikatory postaci
+		if ch == "Strawberry" and not "double_shot" in modifiers[ch]:
+			modifiers[ch].append("double_shot")
+		if ch == "Orange" and not "explosive" in modifiers[ch]:
+			modifiers[ch].append("explosive")
+		if ch == "Pineapple" and not "sticky" in modifiers[ch]:
+			modifiers[ch].append("sticky")
+		if ch == "Grape" and not "shotgun" in modifiers[ch]:
+			modifiers[ch].append("shotgun")
+		if ch == "Lemon" and not "magnetic_seed" in modifiers[ch]:
+			modifiers[ch].append("magnetic_seed")
+		if ch == "Watermelon" and not "stone_seed" in modifiers[ch]:
+			modifiers[ch].append("stone_seed")
 		if ch == "Lemon" and not "fermentation" in modifiers[ch]:
 			modifiers[ch].append("fermentation")
 		if ch == "Watermelon" and not "armor" in modifiers[ch]:
@@ -245,8 +261,7 @@ func is_set_complete() -> bool:
 	return round_number % rounds_per_set == 0
 
 func assign_points() -> void:
-	# Remis (gnicie) — nikt nie dostaje punktów
-	if Global.winner == "":
+	if winner == "":
 		return
 
 	var point_values = [3, 2, 1, 0]
@@ -274,10 +289,27 @@ func build_ranking() -> void:
 
 func take_damage(target: String, amount: float, reason: String = "") -> void:
 	if amount <= 0.0 or not characters.has(target): return
+	if not alive.get(target, false): return # Postać już martwa - ignoruj
 	characters[target]["hp"] -= amount
-	var msg = reason + "  →  " + target + " -" + str(int(amount)) + " HP"
-	print(msg)
-	kill_feed_message.emit(msg)
+
+	if reason != "":
+		last_hit_by[target] = reason
+	
+	# Akumulacja małych obrażeń dla czytelności logów
+	var key = reason + "->" + target
+	var acc = _damage_accumulator.get(key, 0.0) + amount
+	
+	if int(acc) > 0 or characters[target]["hp"] <= 0:
+		var log_amount = int(acc) if acc >= 1.0 else amount
+		var msg = reason + " → " + target + " [color=#ff4444]-" + str(int(acc) if int(acc) > 0 else 1) + " HP[/color]"
+		if characters[target]["hp"] <= 0:
+			msg = "[b][color=red]" + reason + " → " + target + " (ELIMINACJA)[/color][/b]"
+		
+		print(msg.replace("[b]", "").replace("[/b]", "").replace("[color=red]", "").replace("[color=#ff4444]", "").replace("[/color]", ""))
+		kill_feed_message.emit(msg)
+		_damage_accumulator[key] = acc - int(acc)
+	else:
+		_damage_accumulator[key] = acc
 	# W trybie sieciowym serwer synchronizuje HP do wszystkich klientów
 	if is_network_game and multiplayer.is_server():
 		_rpc_sync_hp.rpc(target, float(characters[target]["hp"]))
@@ -326,7 +358,7 @@ func spawn_particles(pos: Vector2, color: Color, amount: int = 15) -> void:
 	cp.scale_amount_max = 7.0
 	cp.color = color
 	main_game.add_child(cp)
-	get_tree().create_timer(1.2).timeout.connect(cp.queue_free)
+	cp.finished.connect(cp.queue_free)
 
 func spawn_hit_particles(pos: Vector2, char_name: String) -> void:
 	if main_game == null or not is_instance_valid(main_game): return
@@ -347,7 +379,7 @@ func spawn_hit_particles(pos: Vector2, char_name: String) -> void:
 	cp.scale_amount_max = 4.0
 	cp.color = col
 	main_game.add_child(cp)
-	get_tree().create_timer(0.8).timeout.connect(cp.queue_free)
+	cp.finished.connect(cp.queue_free)
 
 func spawn_death_particles(pos: Vector2, char_name: String) -> void:
 	if main_game == null or not is_instance_valid(main_game): return
@@ -369,4 +401,22 @@ func spawn_death_particles(pos: Vector2, char_name: String) -> void:
 		cp.scale_amount_max = 8.0 - i * 0.5
 		cp.color = col if i == 0 else Color(col.r * 0.7, col.g * 0.7, col.b * 0.7, 0.8)
 		main_game.add_child(cp)
-		get_tree().create_timer(1.5).timeout.connect(cp.queue_free)
+		cp.finished.connect(cp.queue_free)
+
+func spawn_damage_text(pos: Vector2, text: String, color: Color = Color.WHITE) -> void:
+	if main_game == null or not is_instance_valid(main_game): return
+	var label = Label.new()
+	label.text = text
+	label.z_index = 5
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 4)
+	label.position = pos - Vector2(20, 20)
+	main_game.add_child(label)
+	
+	var tween = create_tween().set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 40, 0.6).set_trans(Tween.TRANS_OUT).set_ease(Tween.EASE_CUBIC)
+	tween.tween_property(label, "modulate:a", 0.0, 0.6).set_delay(0.2)
+	tween.chain().tween_callback(label.queue_free)
