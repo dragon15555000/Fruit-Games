@@ -192,6 +192,8 @@ func receive_damage(raw_dmg: float, attacker_name: String = "") -> float:
 	AudioManager.play_sound("hit")
 	Global.spawn_particles(global_position, Color(1, 0, 0), 5)
 	_refresh_hp_scaled_state()
+	if _visuals:
+		_visuals.trigger_hit_flash()
 
 	# Sprawdź czy cios byłby śmiertelny
 	var cur_hp = float(Global.characters[character_name]["hp"])
@@ -347,6 +349,8 @@ func _physics_process(delta: float) -> void:
 
 	health_bar.value = Global.characters[character_name]["hp"]
 	_refresh_hp_scaled_state()
+	if _visuals:
+		_visuals.set_rot_active(rot_time_remaining < 30.0)
 
 	# Mody pasywne
 	ModifierSystem.apply_passive(character_name, delta, self)
