@@ -37,6 +37,7 @@ var modifier_pickers: Array = []
 
 var shot_counter: Dictionary = {}
 var last_hit_by: Dictionary = {}
+var _damage_accumulator: Dictionary = {}
 
 # Oryginalne staty — NIGDY nie modyfikuj tego słownika.
 # Służy jako source-of-truth przy każdym reset_all().
@@ -189,6 +190,7 @@ func reset_all() -> void:
 	characters      = ORIGINAL_BASE_CHARACTERS.duplicate(true)
 	shot_counter = {}
 	last_hit_by.clear()
+	_damage_accumulator.clear()
 	rot_bonus.clear()
 	alive        = {}
 	var all_chars = [player1_character, player2_character, player3_character, player4_character]
@@ -285,9 +287,22 @@ func take_damage(target: String, amount: float, reason: String = "") -> void:
 
 	if reason != "":
 		last_hit_by[target] = reason
-	var msg = reason + "  →  " + target + " -" + str(int(amount)) + " HP"
-	print(msg)
-	kill_feed_message.emit(msg)
+	
+	# Akumulacja małych obrażeń dla czytelności logów
+	var key = reason + "->" + target
+	var acc = _damage_accumulator.get(key, 0.0) + amount
+	
+	if int(acc) > 0 or characters[target]["hp"] <= 0:
+		var log_amount = int(acc) if acc >= 1.0 else amount
+		var msg = reason + "  →  " + target + " -" + str(int(acc) if int(acc) > 0 else 1) + " HP"
+		if characters[target]["hp"] <= 0:
+			msg = reason + "  →  " + target + " (ELIMINACJA)"
+		
+		print(msg)
+		kill_feed_message.emit(msg)
+		_damage_accumulator[key] = acc - int(acc)
+	else:
+		_damage_accumulator[key] = acc
 	# W trybie sieciowym serwer synchronizuje HP do wszystkich klientów
 	if is_network_game and multiplayer.is_server():
 		_rpc_sync_hp.rpc(target, float(characters[target]["hp"]))

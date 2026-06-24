@@ -38,6 +38,7 @@ var _pause_layer: CanvasLayer = null
 var juice_y:       float = 180.0
 var _juice_time:   float = 0.0
 var _juice_warned: bool  = false
+var _juice_damage_timer: float = 0.0
 
 var map_scenes: Array = [
 	preload("res://scenes/maps/fruit_bowl.tscn"),
@@ -308,12 +309,19 @@ func _physics_process(delta: float) -> void:
 		Global.kill_feed_message.emit("🍹 Sok owocowy się wznosi!")
 
 	if not _ending_round and juice_y < 200.0:
+		_juice_damage_timer += delta
+		var should_apply_juice = _juice_damage_timer >= 0.25
+		
 		for player in $Players.get_children():
 			var char_name = player_characters.get(player.name, "")
 			if char_name == "" or not Global.alive.get(char_name, false):
 				continue
 			if player.position.y + 8.0 > juice_y:
-				player.apply_damage(40.0 * delta, "🍹 Sok owocowy")
+				if should_apply_juice:
+					player.apply_damage(10.0, "🍹 Sok owocowy")
+		
+		if should_apply_juice:
+			_juice_damage_timer = 0.0
 
 	if _ending_round:
 		return
