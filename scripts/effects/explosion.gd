@@ -4,6 +4,8 @@ extends Area2D
 var shooter_name: String = ""
 
 func _ready() -> void:
+	AudioManager.play_sound("shoot", 1.8, -10.0)
+	AudioManager.play_sound("melee", 0.6, 6.0) # Potężny wybuch
 	# Czekamy jedną klatkę fizyki żeby Area2D zdążyła zarejestrować nakładające się ciała.
 	await get_tree().physics_frame
 

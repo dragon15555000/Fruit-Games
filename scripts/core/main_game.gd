@@ -319,6 +319,7 @@ func _physics_process(delta: float) -> void:
 			if player.position.y + 8.0 > juice_y:
 				if should_apply_juice:
 					player.apply_damage(10.0, "🍹 Sok owocowy")
+					AudioManager.play_sound("hit", 0.5, -5.0) # Podwodny/tłumiony hit
 		
 		if should_apply_juice:
 			_juice_damage_timer = 0.0

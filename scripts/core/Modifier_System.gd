@@ -128,6 +128,7 @@ func apply_on_hit(shooter_name: String, target_node: Node, hit_pos: Vector2, dmg
 			# ── Radioaktywna pestka — toksyczna plama w miejscu trafienia
 			"radioactive_seed":
 				_spawn_poison_zone(hit_pos, shooter_name)
+				AudioManager.play_sound("shoot", 1.4, -5.0) # Plumkanie soku
 
 			# ── Strzał zgnilizny — trafiony gnije o 3 sek szybciej ───
 			"rot_shot":
@@ -183,6 +184,7 @@ func apply_on_receive(target_name: String, raw_dmg: float, attacker_name: String
 	if mods.has("wax_coat") and char_node and char_node.wax_active:
 		char_node.wax_active = false
 		Global.kill_feed_message.emit("🕯️ " + target_name + " zablokował trafienie!")
+		AudioManager.play_sound("ui_click", 0.8, 2.0) # Głuchy dźwięk blokady
 		return 0.0
 
 	# ── Konserwant — pełna odporność przez 15 sek ─────────────────
@@ -194,6 +196,7 @@ func apply_on_receive(target_name: String, raw_dmg: float, attacker_name: String
 		if attacker_name != "" and Global.characters.has(attacker_name):
 			Global.take_damage(attacker_name, raw_dmg, "🪞 Lustrzana skórka " + target_name)
 		Global.kill_feed_message.emit("🪞 " + target_name + " odbił atak!")
+		AudioManager.play_sound("ui_click", 1.6, 2.0) # Wysoki dźwięk odbicia
 		if char_node and char_node.seed_collector_bonus > 0:
 			char_node.seed_collector_bonus = 0.0
 			_update_base_dmg(target_name, 0.0)
@@ -239,6 +242,7 @@ func apply_on_lethal(target_name: String) -> bool:
 		char_node.second_fruit_used          = true
 		Global.characters[target_name]["hp"] = 5
 		Global.kill_feed_message.emit("🍀 " + target_name + " przeżył śmiertelny cios!")
+		AudioManager.play_sound("ui_click", 0.5, 6.0) # Głęboki dźwięk ratunku
 		return true
 
 	return false
@@ -322,6 +326,7 @@ func _apply_lifesteal(shooter_name: String, dmg: float) -> void:
 	var node = _find_character(shooter_name)
 	if node:
 		Global.spawn_damage_text(node.global_position + Vector2(0, -30), "+" + str(int(dmg * 0.3)), Color(0.2, 1.0, 0.4))
+		AudioManager.play_sound("ui_click", 2.0, -10.0) # Wysoki "ding" leczenia
 		if node.has_method("_refresh_hp_scaled_state"):
 			node._refresh_hp_scaled_state()
 
@@ -336,6 +341,7 @@ func _apply_juicy_core(shooter_name: String) -> void:
 	var node = _find_character(shooter_name)
 	if node:
 		Global.spawn_damage_text(node.global_position + Vector2(0, -30), "+" + str(int(heal_amt)), Color(0.2, 1.0, 0.4))
+		AudioManager.play_sound("ui_click", 2.2, -8.0) # Jeszcze wyższy "ding"
 		if node.has_method("_refresh_hp_scaled_state"):
 			node._refresh_hp_scaled_state()
 
@@ -359,6 +365,7 @@ func _passive_rot_explosion(char_name: String, char_node: Node) -> void:
 	char_node.rot_explosion_triggered  = true
 	Global.characters[char_name]["hp"] = min(cur_hp + 10.0, max_hp)
 	Global.kill_feed_message.emit("🌋 " + char_name + " — Gnilna eksplozja!")
+	AudioManager.play_sound("melee", 0.7, 5.0) # Basowe pierdnięcie wybuchu
 
 func _passive_poison_trail(char_name: String, delta: float, char_node: Node) -> void:
 	char_node.poison_spawn_timer -= delta

@@ -4,7 +4,8 @@ extends Area2D
 
 var shooter_name: String = ""
 var lifetime:   float = 3.0
-var tick_timer: float = 1.0
+func _ready() -> void:
+	AudioManager.play_sound("shoot", 1.8, -10.0) # Ciche syczenie/plumkanie
 
 func _physics_process(delta: float) -> void:
 	lifetime -= delta

@@ -224,6 +224,7 @@ func die() -> void:
 	_is_dying = true
 
 	AudioManager.play_sound("death")
+	AudioManager.play_sound("melee", 0.5, 4.0) # Basowe pierdnięcie śmierci
 	if Global.main_game:
 		Global.main_game.add_shake(15.0)
 	var killer_reason: String = Global.last_hit_by.get(character_name, "")
