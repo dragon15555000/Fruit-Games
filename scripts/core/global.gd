@@ -252,8 +252,7 @@ func is_set_complete() -> bool:
 	return round_number % rounds_per_set == 0
 
 func assign_points() -> void:
-	# Remis (gnicie) — nikt nie dostaje punktów
-	if Global.winner == "":
+	if winner == "":
 		return
 
 	var point_values = [3, 2, 1, 0]

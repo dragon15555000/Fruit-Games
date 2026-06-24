@@ -93,7 +93,8 @@ func apply_settings() -> void:
 	
 	# Godot używa AudioServer do głośności
 	var master_bus = AudioServer.get_bus_index("Master")
-	AudioServer.set_bus_volume_db(master_bus, linear_to_db(master_vol))
+	if master_bus != -1:
+		AudioServer.set_bus_volume_db(master_bus, linear_to_db(master_vol))
 	
 	# Jeśli masz bus "Music" i "SFX":
 	var music_bus = AudioServer.get_bus_index("Music")

@@ -5,6 +5,3 @@
 
 [node name="Global" type="Node"]
 script = ExtResource("1_11p7f")
-
-[node name="ModifierSystem" type="Node" parent="."]
-script = ExtResource("2_sdtya")
